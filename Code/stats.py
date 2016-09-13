@@ -33,4 +33,12 @@ class Stats:
         assert isinstance(channel_list, list) and isinstance(channel_list[0], ch.Channel)
         self.arrays = [c.flux for c in channel_list]
         self.errors = [c.error for c in channel_list]
+        self.f_e_pairs = zip(self.arrays, self.errors)
+        self.results = []
+
+    def execute_testing(self):
+        for f, e in self.f_e_pairs:
+            print '.'
+            self.results.append(progressive_means(f, e))
+
 

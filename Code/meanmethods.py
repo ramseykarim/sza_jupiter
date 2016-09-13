@@ -65,7 +65,7 @@ class AverageMethods:
 
     def method_4_e(self):
         avg_flux = self.last
-        initial = np.sqrt(np.nansum((self.weights * (self.a - avg_flux) / avg_flux) ** 2.))
+        initial = np.sqrt(np.nansum((self.weights * avg_flux / (self.a - avg_flux)) ** 2.))
         return 1. / initial
 
 

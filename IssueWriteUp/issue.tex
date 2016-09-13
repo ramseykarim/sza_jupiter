@@ -3,6 +3,8 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,graphicx}
 
+\newcommand{\av}[1]{\langle #1 \rangle}
+
 \title{Averaging Methods Investigation}
 \author{Ramsey Karim}
 \date{\today}
@@ -11,7 +13,71 @@
 
 \maketitle
 
-\section{Old Method}
-The initial method of time-averaging flux and error 
+\section*{Background}
+We are given two values for each point: flux and error.
+Flux is stated to be in units of janskys and is denoted here as $F$.
+Error, denoted here as $\rho$, is presumed to be given as a fraction such that
+$\rho F = \sigma$ where sigma is the error in units of janksys.
+
+\section{} \label{s:1}
+The first method of flux averagine shown here was never implemented;
+it's more of a test of the data.
+The flux values are the standard deviations.
+The error is averaged assuming thermal error only, which is what we had done initially.
+$$ \frac{1}{\av{\sigma}^{2}} = \sum_{i} \frac{1}{\sigma_{i}^{2}} $$
+
+\section{} \label{s:2}
+This method of flux averaging is the only one we have used.
+This method of error averaging was corrected from the previous and was used
+for the poster, the modelling, and the points I emailed to Dave and Imke.
+$$ \av{F} = \frac{\sum \frac{F_{i}}{\sigma_{i}}}{\sum \frac{1}{\sigma_{i}}} $$
+$$ \frac{1}{\av{sigma}^{2}} =  \frac{\sum \frac{1}{\sigma_{i}} (F_{i} - \av{F})^{2} }{\sum \frac{1}{\sigma_{i}}} $$
+This may not have been accurate to what I had in my write up, which I did not realize until now.
+I believe I was getting strange error values until I decided to divide by the weight of the sums. \\
+The main issue here is that the units are a little odd.
+The flux averaging comes out in the correct units, but through an odd venue.
+Recall that $\rho F = \sigma$.
+This means that
+$$ \av{F} = \frac{\sum \frac{F_{i}}{\rho_{i} F_{i}}}{\sum \frac{1}{\rho_{i} F_{i}}} $$
+which simplifies to
+$$ \av{F} = \frac{\sum \frac{1}{\rho_{i}}}{\sum \frac{1}{\rho_{i} F_{i}}} $$
+which has the correct units but doesn't intuitively suggest ``average flux''
+(to me). \\
+The average error has incorrect units.
+Perhaps if we placed the $(F_{i} - \av{F})^{2}$ on the bottom of the expression instead of the top,
+in which case the units would be correct and the error would increase if the standard deviation of
+that point were higher.
+
+\section{} \label{s:3}
+This is the version I left our last meeting intending to implement, according to my notes.
+It looks slightly different from the previous and yields rather small error bars, which
+may indicate some sort of an issue here too. \\
+Flux averaging is the same as the last one.
+Error is as:
+$$ \frac{1}{\av{sigma}^{2}} = \sum \frac{1}{\sigma_{i}^{2}} (F_{i} - \av{F})^{2} $$
+I don't think this was what we intended to leave it as,
+and I may have written it down incorrectly.
+The units here don't work either; the average error turns unitless.
+
+\section{} \label{s:4}
+Regarding the flux averaging, I believe that this formulation must be correct,
+but I have little to no intuition as to why. \\
+Regarding the error averaging, I have two suggestions.
+\subsection{} \label{s:41}
+First of all, we could modify the formula in Method \ref{s:2} so that the $(F_{i} - \av{F})^{2}$
+term is on the bottom.
+In addition, the $\sigma_{i}$ terms seem like they should be squared.
+$$ \av{sigma}^{2} =  \frac{\sum \frac{1}{(F_{i} - \av{F})^{2} \sigma_{i}^{2}}}{\sum \frac{1}{\sigma_{i}^{2}}} $$
+This yields the correct units and a better relationship between error and deviation from the mean.
+The problem here is that the errors are being used as weights, which doesn't seem to be a good way
+to focus on averaging the weights.
+\subsection{} \label{s:42}
+My second suggestion tries to adhere more closely to the formula in Method \ref{s:1}.
+Here I try summing up the inverse errors again, but with the addition of modifying them by the
+standard deviation as a fraction of the average.
+$$ \frac{1}{\av{sigma}^{2}} = \sum \frac{1}{\sigma_{i}^{2}} (F_{i} - \av{F})^{2} $$
+This formula preserves correct units ($\sigma$ in janskys),
+retains the proper relationship between error and devation from mean,
+and stays truest to the original method of averaging error. \\
 
 \end{document}
