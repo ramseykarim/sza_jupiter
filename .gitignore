@@ -1,0 +1,8 @@
+/horizons_kartos/*.txt
+/horizons_kartos/jupfluxes.csv
+*.pdf
+*.png
+*.pyc
+/OldCode/*.py
+/models/*.dat
+*/.idea/*
