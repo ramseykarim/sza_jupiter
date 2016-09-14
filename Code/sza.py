@@ -100,8 +100,8 @@ class Channel:
 
     def plot_channel_vs_time(self, fig=11, errorbar=True, color='r'):
         plt.figure(fig)
-        point_values = getPoints()
-        point_errors = getErrors()
+        point_values = self.getPoints()
+        point_errors = self.getErrors()
         point_dates = np.array([p.date for p in self.points])
         if errorbar:
             plt.errorbar(point_dates, point_values, yerr=point_errors, xerr=None)
@@ -505,19 +505,13 @@ def pltmodel(name, color, labelslist, label):
 
 
 # ----------------------------------------------------------------------------------------
-horiz_reader = unpackcsv('horizons_kartos/distances.csv')
+horiz_reader = unpackcsv('../horizons_kartos/distances.csv')
 time_horiz, distarr = process_horizons(horiz_reader)
 
-jup_reader_raw = unpackcsv('jupfluxes.csv', delim=' ')
+jup_reader_raw = unpackcsv('../horizons_kartos/jupfluxes.csv', delim=' ')
 time_raw, channels_list_raw, data_raw = process_kartos(jup_reader_raw)
 
-# jup_reader_golden = unpackcsv('jupiter_flux_golden.txt', delim=' ')
-# header_golden, time_golden, channels_golden, data_golden = process_kartos(jup_reader_golden)
-
-# jup_reader_flagged = unpackcsv('jupiter_fluxes_flagged.txt', delim=' ')
-# header_flagged, time_flagged, channels_flagged, data_flagged = process_kartos(jup_reader_flagged)
-
-jup_reader_best = unpackcsv('jupiter_fluxes_flagged2.txt', delim=' ')
+jup_reader_best = unpackcsv('../TXTs/jupiter_fluxes_flagged_USETHIS.txt', delim=' ')
 time_best, channels_list, data_cube_best = process_kartos(jup_reader_best)
 channels_best = adjust_to_object(time_best, channels_list, data_cube_best)
 
@@ -550,7 +544,7 @@ for f, w, t, e in zip(frequencies * 10.**(-9.), wavelengths, temps_flagged2_s, t
 	fl.write(str(f) + ', ' + str(w) + ', ' + str(t) + ', ' + str(e) + '\n')
 """
 
-prefix = 'models/'
+prefix = '../models/'
 
 
 def makeplots():
@@ -739,6 +733,40 @@ def modelcomp(*args):
     plt.ylim(120, 220)
     locs = np.arange(76) + 19
     plt.xticks(locs, [str(loc) if loc % 10 == 0 else '' for loc in locs])
+
+
+def models_september():
+    model_names = ['saturated', '50abv1bar', '50abv2bar', '80abv1bar', '80abv2bar']
+    clrs = ['black', 'green', 'blue', 'maroon', 'pink']
+    suffix = '.dat'
+
+    labelslist = []
+    plt.rc('xtick.major', width=1)
+    plt.rc('xtick.major', size=5)
+    plt.rc('ytick.major', width=1)
+    plt.rc('ytick.major', size=5)
+    plt.rc('lines', linewidth=1.2)
+
+    for i, m in enumerate(model_names):
+        pltmodel(prefix + m + '/' + m + suffix, clrs[i], labelslist, m)
+    plt.errorbar(np.array(channels_list), temps_flagged2_s, yerr=terrs_flagged2, xerr=None, fmt='.',
+                 color='red')
+    labelslist.append("CARMA")
+    pltkg(labelslist, "KG", color='blue')
+    pltwmap2(labelslist, "WMAP", color='green')
+    pltgib(labelslist, "Gibson", color='purple')
+    pltimke(labelslist, "de Pater", color='navy')
+    plt.legend(labelslist, loc='upper left')
+    plt.title("Post-model upgrade")
+    plt.xscale('log', basex=2)
+    plt.xlim(20, 95)
+    plt.ylim(120, 220)
+    locs = np.arange(76) + 19
+    plt.xticks(locs, [str(loc) if loc % 10 == 0 else '' for loc in locs])
+    plt.show()
+
+
+
 
 
 """

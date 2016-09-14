@@ -4,5 +4,7 @@
 *.png
 *.pyc
 /OldCode/*.py
-/models/*.dat
+/models/*
 */.idea/*
+*.aux
+*.log

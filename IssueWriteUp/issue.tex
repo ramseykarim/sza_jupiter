@@ -31,7 +31,7 @@ This method of flux averaging is the only one we have used.
 This method of error averaging was corrected from the previous and was used
 for the poster, the modelling, and the points I emailed to Dave and Imke.
 $$ \av{F} = \frac{\sum \frac{F_{i}}{\sigma_{i}}}{\sum \frac{1}{\sigma_{i}}} $$
-$$ \frac{1}{\av{sigma}^{2}} =  \frac{\sum \frac{1}{\sigma_{i}} (F_{i} - \av{F})^{2} }{\sum \frac{1}{\sigma_{i}}} $$
+$$ \frac{1}{\av{\sigma}^{2}} =  \frac{\sum \frac{1}{\sigma_{i}} (F_{i} - \av{F})^{2} }{\sum \frac{1}{\sigma_{i}}} $$
 This may not have been accurate to what I had in my write up, which I did not realize until now.
 I believe I was getting strange error values until I decided to divide by the weight of the sums. \\
 The main issue here is that the units are a little odd.
@@ -54,7 +54,7 @@ It looks slightly different from the previous and yields rather small error bars
 may indicate some sort of an issue here too. \\
 Flux averaging is the same as the last one.
 Error is as:
-$$ \frac{1}{\av{sigma}^{2}} = \sum \frac{1}{\sigma_{i}^{2}} (F_{i} - \av{F})^{2} $$
+$$ \frac{1}{\av{\sigma}^{2}} = \sum \frac{1}{\sigma_{i}^{2}} (F_{i} - \av{F})^{2} $$
 I don't think this was what we intended to leave it as,
 and I may have written it down incorrectly.
 The units here don't work either; the average error turns unitless.
@@ -67,7 +67,7 @@ Regarding the error averaging, I have two suggestions.
 First of all, we could modify the formula in Method \ref{s:2} so that the $(F_{i} - \av{F})^{2}$
 term is on the bottom.
 In addition, the $\sigma_{i}$ terms seem like they should be squared.
-$$ \av{sigma}^{2} =  \frac{\sum \frac{1}{(F_{i} - \av{F})^{2} \sigma_{i}^{2}}}{\sum \frac{1}{\sigma_{i}^{2}}} $$
+$$ \av{\sigma}^{2} =  \frac{\sum \frac{1}{(F_{i} - \av{F})^{2} \sigma_{i}^{2}}}{\sum \frac{1}{\sigma_{i}^{2}}} $$
 This yields the correct units and a better relationship between error and deviation from the mean.
 The problem here is that the errors are being used as weights, which doesn't seem to be a good way
 to focus on averaging the weights.
@@ -75,7 +75,7 @@ to focus on averaging the weights.
 My second suggestion tries to adhere more closely to the formula in Method \ref{s:1}.
 Here I try summing up the inverse errors again, but with the addition of modifying them by the
 standard deviation as a fraction of the average.
-$$ \frac{1}{\av{sigma}^{2}} = \sum \frac{1}{\sigma_{i}^{2}} (F_{i} - \av{F})^{2} $$
+$$ \frac{1}{\av{\sigma}^{2}} = \sum \frac{1}{\sigma_{i}^{2} (F_{i} - \av{F})^{2} } $$
 This formula preserves correct units ($\sigma$ in janskys),
 retains the proper relationship between error and devation from mean,
 and stays truest to the original method of averaging error. \\
