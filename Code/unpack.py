@@ -51,12 +51,9 @@ class Unpack:
         # Begin adjustments
         self.distance_adj()
         self.error_investigation = st.Stats(self.channel_obj_list)
-
-
-# Holding off on these
-#        self.average_adj()
-#        self.synchrotron_adj()
-#        self.cmb_unit_adj()
+        self.average_adj()
+        self.synchrotron_adj()
+        self.cmb_unit_adj()
 
     def distance_adj(self):
         indices = [np.argmin(np.abs(self.dates_horizons_array - x)) for x in self.dates_copss_array]
@@ -80,10 +77,13 @@ class Unpack:
         for channel in self.channel_obj_list:
             channel.cmb_unit_adj()
 
-    def plotit(self):
+    def plot_it(self, wl=False):
         tb = [channel.tb for channel in self.channel_obj_list]
         tb_err = [channel.tb_error for channel in self.channel_obj_list]
-        plt.errorbar(self.frequency_list_ghz, tb, yerr=tb_err, fmt='.')
-#        plt.plot(self.frequency_list_ghz, tb)
+        x_axis = self.frequency_list_ghz if not wl else [c.wavelength_cm for c in self.channel_obj_list]
+        plt.errorbar(x_axis, tb, yerr=tb_err, fmt='.')
+        plt.xlabel("Frequency (GHz)" if not wl else "Wavelength (cm)")
+        plt.ylabel("$T_{b}$ (K)")
+        plt.title("$T_{b}$, synchrotron & CMB corrected")
         plt.show()
 

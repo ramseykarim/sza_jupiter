@@ -32,6 +32,13 @@ class Channel:
         assert isinstance(self.flux, np.ndarray)
         weights = 1. / (self.error * self.flux)
         self.flux_avg = np.nansum(1. / self.error) / np.nansum(weights)
+        self.error_avg = 1. / np.sqrt(np.nansum((weights / (self.flux - self.flux_avg)) ** 2.))
+
+    def average_old(self):
+        assert isinstance(self.error, np.ndarray)
+        assert isinstance(self.flux, np.ndarray)
+        weights = 1. / (self.error * self.flux)
+        self.flux_avg = np.nansum(1. / self.error) / np.nansum(weights)
         self.error_avg = 1. / np.sqrt(np.nansum(((self.flux - self.flux_avg) * weights)**2.))
 
     def synchrotron_adj(self, synchrotron):

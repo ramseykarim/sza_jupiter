@@ -25,14 +25,14 @@ def progressive_means(array, error, n):
             for k, f in enumerate(methods.functions):
                 method_results.results[k][j - 2] += f()
     for i in range(len(method_results.results)):
-        method_results.results[i] /= 10.
+        method_results.results[i] /= n
     return method_results
 
 
 class Stats:
     def __init__(self, channel_list):
         assert isinstance(channel_list, list) and isinstance(channel_list[0], ch.Channel)
-        self.f_e_pairs = [(c.flux, c.error) for c in channel_list]
+        self.f_e_pairs = [(np.copy(c.flux), np.copy(c.error)) for c in channel_list]
         self.results = []
 
     def execute_testing(self, n):

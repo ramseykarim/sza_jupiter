@@ -8,17 +8,12 @@ res = u.error_investigation.results[0].results
 xs = np.arange(res[0].size) + 2.
 
 plt.figure(1)
-plt.title("Intensity and Std Dev")
-plt.subplot(121)
+plt.title("Std Dev")
 plt.plot(xs, res[0])
 plt.xlabel("Number of points used")
 plt.ylabel("Std Dev (jy)")
-plt.subplot(122)
-plt.plot(xs, res[1])
-plt.xlabel("Number of points used")
-plt.ylabel("Average flux (jy)")
 
-plt.figure(2)
+plt.figure(3)
 plt.title("Error Averages")
 for i in range(4):
     plt.plot(xs, res[i + 2])
@@ -33,7 +28,7 @@ plt.figure(0)
 plt.xlabel("Frequency (GHz)")
 plt.ylabel("$T_B$ (K)")
 plt.title("One of the average formulas")
-u.plotit()
+u.plot_it()
 f = open("formulation1.txt", 'w')
 for ch in u.channel_obj_list:
     f.write(str(ch.tb) + ', ' + str(ch.tb_error) + '\n')
