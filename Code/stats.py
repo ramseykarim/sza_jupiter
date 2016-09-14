@@ -15,12 +15,13 @@ def shuffle(array, error):
     return array_c, error_c
 
 
-def progressive_means(array, error):
+def progressive_means(array, error, n):
     method_results = mm.MethodContainer(array.size - 2)
-    for i in range(10):
+    np.seterr(all='ignore')
+    for i in range(n):
         a, e = shuffle(array, error)
         for j in range(2, a.size):
-            methods = mm.AverageMethods(a, e)
+            methods = mm.AverageMethods(a[:j], e[:j])
             for k, f in enumerate(methods.functions):
                 method_results.results[k][j - 2] += f()
     for i in range(len(method_results.results)):
@@ -31,14 +32,13 @@ def progressive_means(array, error):
 class Stats:
     def __init__(self, channel_list):
         assert isinstance(channel_list, list) and isinstance(channel_list[0], ch.Channel)
-        self.arrays = [c.flux for c in channel_list]
-        self.errors = [c.error for c in channel_list]
-        self.f_e_pairs = zip(self.arrays, self.errors)
+        self.f_e_pairs = [(c.flux, c.error) for c in channel_list]
         self.results = []
 
-    def execute_testing(self):
+    def execute_testing(self, n):
         for f, e in self.f_e_pairs:
-            print '.'
-            self.results.append(progressive_means(f, e))
+            print '.',
+            self.results.append(progressive_means(f, e, n))
+        print '!'
 
 

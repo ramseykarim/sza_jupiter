@@ -5,6 +5,7 @@ import numpy as np
 import csv
 import channel as ch
 import matplotlib.pyplot as plt
+import stats as st
 
 
 def unpack_horizons(csv_file):
@@ -49,9 +50,13 @@ class Unpack:
                          self.frequency_list_ghz)
         # Begin adjustments
         self.distance_adj()
-        self.average_adj()
-        self.synchrotron_adj()
-        self.cmb_unit_adj()
+        self.error_investigation = st.Stats(self.channel_obj_list)
+
+
+# Holding off on these
+#        self.average_adj()
+#        self.synchrotron_adj()
+#        self.cmb_unit_adj()
 
     def distance_adj(self):
         indices = [np.argmin(np.abs(self.dates_horizons_array - x)) for x in self.dates_copss_array]

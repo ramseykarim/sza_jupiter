@@ -25,10 +25,9 @@ class AverageMethods:
         self.weights = 1. / (self.a * self.e)
         self.w_sum = np.nansum(self.weights)
         self.last = 0
-        self.functions = [self.method_1_a, self.method_1_e,
-                          self.method_2_a, self.method_2_e,
-                          self.method_3_a, self.method_3_e,
-                          self.method_4_a, self.method_4_e]
+        self.functions = [self.method_1_a, self.method_2_a,
+                          self.method_1_e, self.method_2_e,
+                          self.method_3_e, self.method_4_e]
 
     def method_1_a(self):
         array = self.a
@@ -50,22 +49,14 @@ class AverageMethods:
         initial = np.nansum(self.weights * (self.a - avg_flux) ** 2.) / self.w_sum
         return np.sqrt(initial)
 
-    def method_3_a(self):
-        self.last = self.method_2_a()
-        return self.last
-
     def method_3_e(self):
         avg_flux = self.last
         initial = np.sqrt(np.nansum(self.weights ** 2. * (self.a - avg_flux) ** 2.))
         return 1. / initial
 
-    def method_4_a(self):
-        self.last = self.method_2_a()
-        return self.last
-
     def method_4_e(self):
         avg_flux = self.last
-        initial = np.sqrt(np.nansum((self.weights * avg_flux / (self.a - avg_flux)) ** 2.))
+        initial = np.sqrt(np.nansum((self.weights / (self.a - avg_flux)) ** 2.))
         return 1. / initial
 
 
@@ -75,11 +66,8 @@ class MethodContainer:
         self.method_1_e = np.zeros(size)
         self.method_2_a = np.zeros(size)
         self.method_2_e = np.zeros(size)
-        self.method_3_a = np.zeros(size)
         self.method_3_e = np.zeros(size)
-        self.method_4_a = np.zeros(size)
         self.method_4_e = np.zeros(size)
-        self.results = [self.method_1_a, self.method_1_e,
-                        self.method_2_a, self.method_2_e,
-                        self.method_3_a, self.method_3_e,
-                        self.method_4_a, self.method_4_e]
+        self.results = [self.method_1_a, self.method_2_a,
+                        self.method_1_e, self.method_2_e,
+                        self.method_3_e, self.method_4_e]
