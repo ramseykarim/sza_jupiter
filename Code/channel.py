@@ -30,9 +30,13 @@ class Channel:
     def average(self):
         assert isinstance(self.error, np.ndarray)
         assert isinstance(self.flux, np.ndarray)
-        weights = 1. / (self.error * self.flux)
-        self.flux_avg = np.nansum(1. / self.error) / np.nansum(weights)
-        self.error_avg = 1. / np.sqrt(np.nansum((weights / (self.flux - self.flux_avg)) ** 2.))
+
+        weights = 1. / (self.error * self.flux) ** 2.
+        self.flux_avg = np.nansum(weights * self.flux) / np.nansum(weights)
+        variance_sq = np.nansum(weights)
+        acc_error_sq = np.nansum(weights * (self.flux - self.flux_avg)**2.) / variance_sq
+        total_error_sq_inv = (1. / acc_error_sq) + (1. / variance_sq)
+        self.error_avg = 1. / np.sqrt(total_error_sq_inv)
 
     def average_old(self):
         assert isinstance(self.error, np.ndarray)

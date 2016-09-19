@@ -15,11 +15,12 @@ plt.ylabel("Std Dev (jy)")
 
 plt.figure(3)
 plt.title("Error Averages")
-for i in range(4):
+n_plots = 5
+for i in range(n_plots):
     plt.plot(xs, res[i + 2])
 plt.xlabel("Number of points used")
 plt.ylabel("Error (sort of jy)")
-plt.legend(['1', '2', '3', '4'])
+plt.legend([str(x + 1) for x in range(n_plots)])
 plt.yscale('log')
 plt.show()
 

@@ -25,9 +25,11 @@ class AverageMethods:
         self.weights = 1. / (self.a * self.e)
         self.w_sum = np.nansum(self.weights)
         self.f_avg = self.flux_avg()
+        self.f_avg_2 = 0.
         self.functions = [self.method_1_a, self.method_2_a,
                           self.method_1_e, self.method_2_e,
-                          self.method_3_e, self.method_4_e]
+                          self.method_3_e, self.method_4_e,
+                          self.method_5_e]
 
     def flux_avg(self):
         weighted_flux = 1. / self.e
@@ -61,6 +63,20 @@ class AverageMethods:
         initial = np.sqrt(np.nansum((self.weights / (self.a - avg_flux)) ** 2.))
         return 1. / initial
 
+    def method_5_a(self):
+        weights2 = self.weights ** 2.
+        initial = np.nansum(weights2 * self.a) / np.nansum(weights2)
+        self.f_avg_2 = initial
+        return initial
+
+    def method_5_e(self):
+        avg_flux = self.f_avg_2
+        weights2 = self.weights ** 2.
+        variance_sq = np.nansum(weights2)
+        acc_error_sq = np.nansum(weights2 * (self.a - avg_flux)**2.) / variance_sq
+        total_error_sq_inv = (1. / acc_error_sq) + (1. / variance_sq)
+        return 1. / np.sqrt(total_error_sq_inv)
+
 
 class MethodContainer:
     def __init__(self, size):
@@ -70,6 +86,8 @@ class MethodContainer:
         self.method_2_e = np.zeros(size)
         self.method_3_e = np.zeros(size)
         self.method_4_e = np.zeros(size)
+        self.method_5_e = np.zeros(size)
         self.results = [self.method_1_a, self.method_2_a,
                         self.method_1_e, self.method_2_e,
-                        self.method_3_e, self.method_4_e]
+                        self.method_3_e, self.method_4_e,
+                        self.method_5_e]
