@@ -72,8 +72,8 @@ class AverageMethods:
     def method_5_e(self):
         avg_flux = self.f_avg_2
         weights2 = self.weights ** 2.
-        variance_sq = np.nansum(weights2)
-        acc_error_sq = np.nansum(weights2 * (self.a - avg_flux)**2.) / variance_sq
+        variance_sq = 1. / np.nansum(weights2)
+        acc_error_sq = np.nansum(weights2 * (self.a - avg_flux)**2.) * variance_sq
         total_error_sq_inv = (1. / acc_error_sq) + (1. / variance_sq)
         return 1. / np.sqrt(total_error_sq_inv)
 
