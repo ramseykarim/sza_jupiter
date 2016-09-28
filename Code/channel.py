@@ -38,13 +38,6 @@ class Channel:
         total_error_sq_inv = (1. / acc_error_sq) + (1. / variance_sq)
         self.error_avg = 1. / np.sqrt(total_error_sq_inv)
 
-    def average_old(self):
-        assert isinstance(self.error, np.ndarray)
-        assert isinstance(self.flux, np.ndarray)
-        weights = 1. / (self.error * self.flux)
-        self.flux_avg = np.nansum(1. / self.error) / np.nansum(weights)
-        self.error_avg = 1. / np.sqrt(np.nansum(((self.flux - self.flux_avg) * weights)**2.))
-
     def synchrotron_adj(self, synchrotron):
         self.flux_avg -= synchrotron
 
@@ -64,5 +57,11 @@ class Channel:
         inside_log_err = 1. + 1. / second_term_err
         self.tb = ((h * v) / k) / np.log(inside_log_flx)
         self.tb_error = ((h * v) / k) / np.log(inside_log_err)
+
+    def info_tuple(self):
+        return (self.frequency_ghz,
+                self.wavelength_cm,
+                self.tb,
+                self.tb_error)
 
 

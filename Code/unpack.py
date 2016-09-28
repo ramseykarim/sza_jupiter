@@ -7,6 +7,8 @@ import channel as ch
 import matplotlib.pyplot as plt
 import stats as st
 
+PATH = "/home/ramsey/Documents/Research/Jupiter/SZA/"
+
 
 def unpack_horizons(csv_file):
     data_file = open(csv_file, 'rb')
@@ -43,10 +45,10 @@ class Unpack:
                                    28.688000, 28.188000, 27.688000]
         # Unpack data files into object
         self.dates_horizons_array, self.distances_horizons_array =\
-            unpack_horizons("/home/ramsey/Documents/Research/Jupiter/SZA/horizons_kartos/distances.csv")
+            unpack_horizons(PATH + "horizons_kartos/distances.csv")
         self.dates_horizons_array -= self.mjd
         self.dates_copss_array, self.channel_obj_list =\
-            unpack_copss("/home/ramsey/Documents/Research/Jupiter/SZA/TXTs/jupiter_fluxes_flagged_USETHIS.txt",
+            unpack_copss(PATH + "TXTs/jupiter_fluxes_flagged_USETHIS.txt",
                          self.frequency_list_ghz)
         # Begin adjustments
         self.distance_adj()
@@ -77,7 +79,7 @@ class Unpack:
         for channel in self.channel_obj_list:
             channel.cmb_unit_adj()
 
-    def plot_it(self, wl=False):
+    def plot_simple(self, wl=False):
         tb = [channel.tb for channel in self.channel_obj_list]
         tb_err = [channel.tb_error for channel in self.channel_obj_list]
         x_axis = self.frequency_list_ghz if not wl else [c.wavelength_cm for c in self.channel_obj_list]
@@ -87,3 +89,8 @@ class Unpack:
         plt.title("$T_{b}$, synchrotron & CMB corrected")
         plt.show()
 
+    def write_points(self):
+        fl = open('ramsey_data_09_27_16.txt', 'w')
+        fl.write("# Frequency (GHz), Wavelength (cm), T_b (K), Error (K)\n")
+        for f, w, t, e in [channel.info_tuple() for channel in self.channel_obj_list]:
+            fl.write(str(f) + ', ' + str(w) + ', ' + str(t) + ', ' + str(e) + '\n')
