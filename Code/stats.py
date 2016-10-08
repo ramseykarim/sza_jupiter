@@ -29,16 +29,34 @@ def progressive_means(array, error, n):
     return method_results
 
 
+def bootstrap_flux_average(array, error, frequency, n):
+    half = len(array) / 2
+    results = mm.BootstrapAverageContainer(frequency)
+    for i in range(n):
+        a, e = shuffle(array, error)
+        average_container = mm.AverageMethods(a[:half], e[:half])
+        results.append(average_container.method_5_a())
+    return results
+
+
 class Stats:
     def __init__(self, channel_list):
         assert isinstance(channel_list, list) and isinstance(channel_list[0], ch.Channel)
-        self.f_e_pairs = [(np.copy(c.flux), np.copy(c.error)) for c in channel_list]
-        self.results = []
+        self.f_e_f_triples = [(np.copy(c.flux), np.copy(c.error), c.frequency_ghz) for c in channel_list]
+        self.results_error = []
+        self.results_averages = []
 
-    def execute_testing(self, n):
-        for f, e in self.f_e_pairs:
+    def execute_error_testing(self, n):
+        for f, e, v in self.f_e_f_triples:
             print '.',
-            self.results.append(progressive_means(f, e, n))
+            self.results_error.append(progressive_means(f, e, n))
         print '!'
+
+    def execute_flux_testing(self, n):
+        for f, e, v in self.f_e_f_triples:
+            print '.',
+            self.results_averages.append(bootstrap_flux_average(f, e, v, n))
+        print '!'
+        return self.results_averages
 
 

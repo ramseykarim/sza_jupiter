@@ -50,12 +50,14 @@ class Unpack:
         self.dates_copss_array, self.channel_obj_list =\
             unpack_copss(PATH + "TXTs/jupiter_fluxes_flagged_USETHIS.txt",
                          self.frequency_list_ghz)
-        # Begin adjustments
+        self.error_investigation = 0
+
+    def adjust(self):
         self.distance_adj()
-        self.error_investigation = st.Stats(self.channel_obj_list)
         self.average_adj()
         self.synchrotron_adj()
         self.cmb_unit_adj()
+        return self
 
     def distance_adj(self):
         indices = [np.argmin(np.abs(self.dates_horizons_array - x)) for x in self.dates_copss_array]
@@ -88,6 +90,11 @@ class Unpack:
         plt.ylabel("$T_{b}$ (K)")
         plt.title("$T_{b}$, synchrotron & CMB corrected")
         plt.show()
+
+    def error_investigation_init(self):
+        self.distance_adj()
+        self.error_investigation = st.Stats(self.channel_obj_list)
+        return self
 
     def write_points(self):
         fl = open('ramsey_data_09_27_16.txt', 'w')

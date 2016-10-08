@@ -10,6 +10,16 @@ def generate_model(root_name):
     return frequencies, points
 
 
+def compare_nh3_model(root_name):
+    new_s = "_newnh3"
+    raw_data_old = np.loadtxt(PATH + root_name + "/" + root_name + ".dat")
+    frequencies = raw_data_old[:, 0]
+    points_old = raw_data_old[:, 1]
+    raw_data_new = np.loadtxt(PATH + root_name + new_s + "/" + root_name + new_s + ".dat")
+    points_new = raw_data_new[:, 1]
+    return frequencies, (points_new - points_old)
+
+
 def kg(plotter):
     kg_f = [20.050, 20.295, 20.735, 20.970, 21.225, 21.550, 22.055, 22.220, 22.370, 22.945, 23.410, 23.840, 24.100]
     kg_tb = [144.9, 145.6, 144.0, 143.0, 146.0, 142.2, 142.1, 137.6, 137.1, 138.6, 139.1, 141.6, 140.8]

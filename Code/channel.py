@@ -3,6 +3,7 @@
 """
 import scipy.constants as cst
 import numpy as np
+import sync_cmb as sc
 
 jy_to_w = 1e-26
 c = cst.c  # m/s
@@ -28,9 +29,22 @@ class Channel:
         self.flux *= mod_array
 
     def average(self):
+        """
+        This is the newest average, corresponding to:
+        Weight:
+        w = 1/error^2
+        Flux:
+        <F> = (sum F * w) / (sum w)
+        Error:
+        1/sigma_T = 1/sigma + 1/n
+        where sigma is
+        sigma^2 = (sum (F - <F>)^2 * w) / (sum w)
+        and n is
+        n^2 = 1/(sum w)
+        :return: The averages
+        """
         assert isinstance(self.error, np.ndarray)
         assert isinstance(self.flux, np.ndarray)
-
         weights = 1. / (self.error * self.flux) ** 2.
         self.flux_avg = np.nansum(weights * self.flux) / np.nansum(weights)
         variance_sq = 1. / np.nansum(weights)
@@ -52,11 +66,16 @@ class Channel:
         first_term = 1. / (np.exp((h * v) / (k * T_cmb)) - 1)
         second_term_cst = (c ** 2. * (cst.au * 4.04)**2.) / (2 * h * v**3. * pi * r_eq * r_pp)
         second_term_flx = f_i * second_term_cst
-        second_term_err = sigma_i * second_term_cst
+        second_term_hi_err = (f_i + sigma_i) * second_term_cst
+        second_term_lo_err = (f_i - sigma_i) * second_term_cst
         inside_log_flx = 1. + 1. / (first_term + second_term_flx)
-        inside_log_err = 1. + 1. / second_term_err
+        inside_log_hi_err = 1. + 1. / (first_term + second_term_hi_err)
+        inside_log_lo_err = 1. + 1. / (first_term + second_term_lo_err)
         self.tb = ((h * v) / k) / np.log(inside_log_flx)
-        self.tb_error = ((h * v) / k) / np.log(inside_log_err)
+        tb_hi_error = ((h * v) / k) / np.log(inside_log_hi_err)
+        tb_lo_error = ((h * v) / k) / np.log(inside_log_lo_err)
+        hi_error, lo_error = np.abs(tb_hi_error - self.tb), np.abs(tb_lo_error - self.tb)
+        self.tb_error = 3. * np.max([hi_error, lo_error])
 
     def info_tuple(self):
         return (self.frequency_ghz,

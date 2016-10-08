@@ -1,4 +1,5 @@
 import numpy as np
+import sync_cmb as sc
 
 """
 All methods are designed to take two arrays:
@@ -118,3 +119,25 @@ class MethodContainer:
                         self.method_1_e, self.method_2_e,
                         self.method_3_e, self.method_4_e,
                         self.method_5_e]
+
+
+class BootstrapAverageContainer:
+    def __init__(self, frequency):
+        self.frequency = frequency
+        self.x = []
+        self.y = []
+        self.t = []
+
+    def append(self, average):
+        self.x.append(self.frequency)
+        self.y.append(average)
+        self.t.append(sc.synchrotron_cmb_units_np(average, self.frequency))
+
+    def mean(self):
+        return np.mean(self.y)
+
+    def s_d_o_m(self):
+        mean = self.mean()
+        variance = np.sum(np.array([(x - mean) ** 2. for x in self.y]))
+        return np.sqrt(variance) / float(len(self.y))
+
