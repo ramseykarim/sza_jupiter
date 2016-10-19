@@ -97,7 +97,11 @@ class Unpack:
         return self
 
     def write_points(self):
-        fl = open('ramsey_data_09_27_16.txt', 'w')
+        fl = open('ramsey_data_10_17_16.txt', 'w')
         fl.write("# Frequency (GHz), Wavelength (cm), T_b (K), Error (K)\n")
         for f, w, t, e in [channel.info_tuple() for channel in self.channel_obj_list]:
             fl.write(str(f) + ', ' + str(w) + ', ' + str(t) + ', ' + str(e) + '\n')
+
+    def print_points(self):
+        for f, w, t, e in [channel.info_tuple() for channel in self.channel_obj_list]:
+            print "F: ", f, " WL: ", w, " Tb: ", t, " Er: ", e

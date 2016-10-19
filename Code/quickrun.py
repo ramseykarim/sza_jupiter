@@ -29,6 +29,7 @@ def run_normal():
     p.add_all_other_data()
     p.add_model_plot("saturated", color='k')
     p.add_model_plot("50abv2bar", color='green')
+    u.print_points()
     p.show()
 
 

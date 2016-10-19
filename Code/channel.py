@@ -17,7 +17,7 @@ class Channel:
 
     def __init__(self, rectangle, frequency_ghz):
         self.flux = rectangle[:, 0]
-        self.error = rectangle[:, 1]  # Still a percentage
+        self.error = rectangle[:, 1]  # Still a percentage?, and adjusted for 5% abscal error #TODO
         self.frequency_ghz = frequency_ghz
         self.wavelength_cm = (cst.c / frequency_ghz) * 1e-7
         self.flux_avg = 0.
@@ -45,7 +45,8 @@ class Channel:
         """
         assert isinstance(self.error, np.ndarray)
         assert isinstance(self.flux, np.ndarray)
-        weights = 1. / (self.error * self.flux) ** 2.
+        weights = 1. / (self.error * self.flux) ** 2.  # This is the original
+        # weights = 1. / self.error ** 2.  # This is new #TODO
         self.flux_avg = np.nansum(weights * self.flux) / np.nansum(weights)
         variance_sq = 1. / np.nansum(weights)
         acc_error_sq = np.nansum(weights * (self.flux - self.flux_avg)**2.) * variance_sq
