@@ -19,7 +19,9 @@ class Plotting:
         self.labels_list.append("SZA")
         tb = [channel.tb for channel in unpacker.channel_obj_list]
         tb_err = [channel.tb_error for channel in unpacker.channel_obj_list]
+        tb_ens_err = [channel.tb_ensemble_error for channel in unpacker.channel_obj_list]
         x_axis = unpacker.frequency_list_ghz if not self.wl else [c.wavelength_cm for c in unpacker.channel_obj_list]
+        plt.errorbar(x_axis, tb, yerr=tb_ens_err, fmt='.')
         plt.errorbar(x_axis, tb, yerr=tb_err, fmt='.')
 
     def add_model_plot(self, root_name, color, line_sty='-'):

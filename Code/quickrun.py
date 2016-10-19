@@ -9,16 +9,16 @@ import error_investigation as ei
 
 def run_error_comp():
     p = ei.FlexPlotting()
-    u_bootstrap = up.Unpack().error_investigation_init()
-    results = u_bootstrap.error_investigation.execute_flux_testing(100)
-    p.add_flux_scatter(results)
+    # u_bootstrap = up.Unpack().error_investigation_init()
+    # results = u_bootstrap.error_investigation.execute_flux_testing(100)
+    # p.add_flux_scatter(results)
     unpackers = {}
     for i in range(4):
         u = ei.FlexUnpack().assign(i+1).adjust()
         unpackers[i+1] = u
         p.add_my_data(u)
     p.show_prep()
-    ei.add_best_mean_bars(unpackers[1], results)
+    # ei.add_best_mean_bars(unpackers[1], results)
     p.show()
 
 

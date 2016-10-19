@@ -14,7 +14,7 @@ class FlexChannel(ch.Channel):
         if number == 1:
             self.average()
         elif number == 2:
-            self.average_weight_1()
+            self.average_error_jy()
         elif number == 3:
             self.average_n_hat()
         elif number == 4:
@@ -22,17 +22,17 @@ class FlexChannel(ch.Channel):
         else:
             raise ValueError(str(number) + " was not an option")
 
-    def average_weight_1(self):
+    def average_error_jy(self):
         """
-        This is the same as "new" but with w = 1
+        This is the same as "new" but with error assumed in jy
         :return: The averages
         """
         assert isinstance(self.error, np.ndarray)
         assert isinstance(self.flux, np.ndarray)
-        weights = np.ones(self.flux.size)
-        self.flux_avg = np.nansum(weights * self.flux) / np.nansum(weights)
+        weights = 1. / (self.error * self.flux) ** 2.
         variance_sq = 1. / np.nansum(weights)
-        acc_error_sq = np.nansum(weights * (self.flux - self.flux_avg) ** 2.) * variance_sq
+        self.flux_avg = np.nansum(weights * self.flux) * variance_sq
+        acc_error_sq = np.nansum(weights * ((self.flux - self.flux_avg) ** 2.)) * variance_sq
         total_error_sq_inv = (1. / acc_error_sq) + (1. / variance_sq)
         self.error_avg = 1. / np.sqrt(total_error_sq_inv)
 
@@ -44,8 +44,8 @@ class FlexChannel(ch.Channel):
         assert isinstance(self.error, np.ndarray)
         assert isinstance(self.flux, np.ndarray)
         weights = 1. / (self.error * self.flux) ** 2.
-        self.flux_avg = np.nansum(weights * self.flux) / np.nansum(weights)
         variance_sq = 1. / np.nansum(weights)
+        self.flux_avg = np.nansum(weights * self.flux) * variance_sq
         self.error_avg = np.sqrt(variance_sq)
 
     def average_sigma_hat(self):
@@ -55,9 +55,9 @@ class FlexChannel(ch.Channel):
         """
         assert isinstance(self.error, np.ndarray)
         assert isinstance(self.flux, np.ndarray)
-        weights = 1. / (self.error * self.flux) ** 2.
-        self.flux_avg = np.nansum(weights * self.flux) / np.nansum(weights)
+        weights = 1. / self.error ** 2.
         variance_sq = 1. / np.nansum(weights)
+        self.flux_avg = np.nansum(weights * self.flux) * variance_sq
         acc_error_sq = np.nansum(weights * (self.flux - self.flux_avg) ** 2.) * variance_sq
         self.error_avg = np.sqrt(acc_error_sq)
 
@@ -144,13 +144,13 @@ class FlexPlotting(pltt.Plotting):
 
     def custom_label(self, number):
         if number == 1:
-            self.labels_list.append("$\sigma_{T}$")
+            self.labels_list.append("$\sigma_{T}$ w/ jy")
         elif number == 2:
-            self.labels_list.append("$w_{i} = 1$")
+            self.labels_list.append("$\sigma_{T}$ not jy")
         elif number == 3:
-            self.labels_list.append("$\hat{n}$")
+            self.labels_list.append("Therm only")
         elif number == 4:
-            self.labels_list.append("$\hat{\sigma}$")
+            self.labels_list.append("Ensemble")
         else:
             raise ValueError(str(number) + " was not an option")
 
