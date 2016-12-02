@@ -9,6 +9,8 @@ class Plotting:
         self.wl = wl
         self.labels_list = []
         self.labels_list_models = []
+
+    def prep_data_plot(self):
         plt.xlabel("Frequency (GHz)" if not self.wl else "Wavelength (cm)")
         plt.ylabel("$T_{b}$ (K)")
         plt.title("$T_{b}$ vs. " + "$\\nu$" if not self.wl else "$\lambda$")
@@ -18,16 +20,19 @@ class Plotting:
     def add_my_data(self, unpacker):
         self.labels_list.append("SZA")
         tb = [channel.tb for channel in unpacker.channel_obj_list]
-        tb_err = [channel.tb_error for channel in unpacker.channel_obj_list]
-        tb_ens_err = [channel.tb_ensemble_error for channel in unpacker.channel_obj_list]
+        tb_err = [channel.tb_error_slope for channel in unpacker.channel_obj_list]
+        tb_ens_err = [channel.tb_error_offset for channel in unpacker.channel_obj_list]
         x_axis = unpacker.frequency_list_ghz if not self.wl else [c.wavelength_cm for c in unpacker.channel_obj_list]
         plt.errorbar(x_axis, tb, yerr=tb_ens_err, fmt='.')
-        plt.errorbar(x_axis, tb, yerr=tb_err, fmt='.')
+        plt.errorbar(x_axis, tb, yerr=tb_err, fmt='.', label='_nolegend_')
 
     def add_model_plot(self, root_name, color, line_sty='-'):
         frequencies, points = mdl.generate_model(root_name)
         self.labels_list_models.append(root_name)
-        plt.plot(self.f_or_w(frequencies), points, line_sty, color=color)
+        if color.lower() == "default":
+            plt.plot(self.f_or_w(frequencies), points, line_sty)
+        else:
+            plt.plot(self.f_or_w(frequencies), points, line_sty, color=color)
 
     def add_model_compare(self, root_name, color):
         frequencies, points = mdl.compare_nh3_model(root_name)
@@ -45,11 +50,11 @@ class Plotting:
         else:
             return frequencies
 
-    def show_prep(self):
+    def show_prep(self, location='lower right'):
         plt.xscale('log', basex=2)
         tick_locations = np.arange(76) + 19
         plt.xticks(tick_locations, [str(loc) if loc % 10 == 0 else '' for loc in tick_locations])
-        plt.legend(self.labels_list_models + self.labels_list, loc='lower right')
+        plt.legend(self.labels_list_models + self.labels_list, loc=location)
 
     def show(self):
         plt.show()

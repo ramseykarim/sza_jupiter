@@ -3,8 +3,9 @@
 """
 import scipy.constants as cst
 import numpy as np
+import copy
 
-jy_to_w = 1e-26
+jy_to_w = 1.e-26
 c = cst.c  # m/s
 h = cst.h  # Planck, SI
 pi = cst.pi
@@ -23,8 +24,8 @@ class Channel:
         self.error_avg = 0.  # Janskys, very small, good for slope
         self.ensemble_error = 0.  # Janskys, ~5%, good for absolute calibration
         self.tb = 0.
-        self.tb_error = 0.
-        self.tb_ensemble_error = 0.
+        self.tb_error_slope = 0.
+        self.tb_error_offset = 0.
 
     def distance_adj(self, mod_array):
         self.flux *= mod_array
@@ -37,7 +38,7 @@ class Channel:
         Flux:
         <F> = (sum F * w) / (sum w)
         Error:
-        1/sigma_T = 1/sigma + 1/n
+        sigma_T^2 = sigma^2 + n^2
         where sigma is
         sigma^2 = (sum (F - <F>)^2 * w) / (sum w)
         and n is
@@ -47,13 +48,14 @@ class Channel:
         assert isinstance(self.error, np.ndarray)
         assert isinstance(self.flux, np.ndarray)
         # weights = 1. / (self.error * self.flux) ** 2.  # This is the original
-        weights = 1. / self.error ** 2.  # This is new #TODO
+        weights = 1. / self.error ** 2.  # This is new
         self.flux_avg = np.nansum(weights * self.flux) / np.nansum(weights)
         variance_sq = 1. / np.nansum(weights)
-        acc_error_sq = np.nansum(weights * (self.flux - self.flux_avg)**2.) * variance_sq
-        self.ensemble_error = np.sqrt(acc_error_sq)
-        total_error_sq_inv = (1. / acc_error_sq) + (1. / variance_sq)
-        self.error_avg = 1. / np.sqrt(total_error_sq_inv)
+        accuracy_error_sq = np.nansum(weights * (self.flux - self.flux_avg)**2.) * variance_sq
+        self.ensemble_error = np.sqrt(accuracy_error_sq + variance_sq)
+        # total_error_sq_inv = (1. / accuracy_error_sq) + (1. / variance_sq)
+        # self.error_avg = 1. / np.sqrt(total_error_sq_inv)
+        self.error_avg = np.nanmean(self.error/self.flux) * self.flux_avg
 
     def synchrotron_adj(self, synchrotron):
         self.flux_avg -= synchrotron
@@ -62,13 +64,13 @@ class Channel:
         f_i = self.flux_avg * jy_to_w
         sigma_i = self.error_avg * jy_to_w
         sigma_hat = self.ensemble_error * jy_to_w
-        v = self.frequency_ghz * 1e9
+        v = self.frequency_ghz * 1.e9
         r_eq = 71492000.
         r_p = 66854000.
         sub_earth_lat = 0.15 * cst.degree  # radians
         r_pp = np.sqrt((r_eq * np.sin(sub_earth_lat)) ** 2. + (r_p * np.cos(sub_earth_lat)) ** 2.)
-        first_term = 1. / (np.exp((h * v) / (k * T_cmb)) - 1)
-        second_term_cst = (c ** 2. * (cst.au * 4.04)**2.) / (2 * h * v**3. * pi * r_eq * r_pp)
+        first_term = 1. / (np.exp((h * v) / (k * T_cmb)) - 1.)
+        second_term_cst = (c ** 2. * (cst.au * 4.04)**2.) / (2. * h * v**3. * pi * r_eq * r_pp)
 
         second_term_flx = f_i * second_term_cst
         second_term_hi_err = (f_i + sigma_i) * second_term_cst
@@ -89,14 +91,27 @@ class Channel:
         tb_hi_ens_error = ((h * v) / k) / np.log(inside_log_hi_ens_err)
         tb_lo_ens_error = ((h * v) / k) / np.log(inside_log_lo_ens_err)
         hi_ens_error, lo_ens_error = np.abs(tb_hi_ens_error - self.tb), np.abs(tb_lo_ens_error - self.tb)
-        self.tb_error = np.max([hi_error, lo_error])  # This was multiplied by 3 originally? #TODO
-        self.tb_ensemble_error = np.max([hi_ens_error, lo_ens_error])
+        self.tb_error_slope = np.max([hi_error, lo_error])  # This was multiplied by 3 originally? #TODO
+        self.tb_error_offset = np.max([hi_ens_error, lo_ens_error])
+
+    def altitude_adj(self, original_alt):
+        finite_i = np.isfinite(self.flux)
+        flux = self.flux[finite_i]
+        alt = original_alt[finite_i]
+        degree = 1
+        alt_fit = np.polyfit(alt, flux, deg=degree)
+        alt_solution = np.zeros(len(alt))
+        for i, coefficient in enumerate(alt_fit[:degree]):
+            alt_solution += coefficient * (alt ** (degree - i))
+        self.flux[finite_i] -= alt_solution
 
     def info_tuple(self):
         return (self.frequency_ghz,
                 self.wavelength_cm,
                 self.tb,
-                self.tb_error,
-                self.tb_ensemble_error)
+                self.tb_error_slope,
+                self.tb_error_offset)
 
+    def copy(self):
+        return copy.deepcopy(self)
 

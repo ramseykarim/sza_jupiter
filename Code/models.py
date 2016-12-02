@@ -51,3 +51,25 @@ def imke(plotter):
 
 
 EXISTING_DATA = [kg, wmap, gibson, imke]
+
+
+def chi_sq((frequencies, tb, tbe_small, tbe_large, model_name)):
+    m_freq, m_point = generate_model(model_name)
+
+    deg = 3
+    model_fit = np.polyfit(m_freq, m_point, deg)
+
+    def model(x):
+        output = np.zeros(x.shape)
+        for i, coefficient in enumerate(model_fit):
+            output += coefficient * (x ** (deg - i))
+        return output
+
+    m_point = model(frequencies)
+    mid_index = len(tb) / 2
+    offset = m_point[mid_index] - tb[mid_index]
+    if np.abs(offset) > np.min(tbe_large):
+        return False
+    chi_squared = m_point - tb - offset
+    chi_squared = np.sum((chi_squared ** 2.) / tbe_small)
+    return chi_squared
