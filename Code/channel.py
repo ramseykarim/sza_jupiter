@@ -49,8 +49,8 @@ class Channel:
         assert isinstance(self.flux, np.ndarray)
         # weights = 1. / (self.error * self.flux) ** 2.  # This is the original
         weights = 1. / self.error ** 2.  # This is new
-        self.flux_avg = np.nansum(weights * self.flux) / np.nansum(weights)
         variance_sq = 1. / np.nansum(weights)
+        self.flux_avg = np.nansum(weights * self.flux) * variance_sq
         accuracy_error_sq = np.nansum(weights * (self.flux - self.flux_avg)**2.) * variance_sq
         self.ensemble_error = np.sqrt(accuracy_error_sq + variance_sq)
         # total_error_sq_inv = (1. / accuracy_error_sq) + (1. / variance_sq)

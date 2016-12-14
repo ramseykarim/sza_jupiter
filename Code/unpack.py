@@ -144,14 +144,18 @@ class Unpack:
         return self
 
     def write_points(self):
-        fl = open('ramsey_data_11_13_16.txt', 'w')
-        fl.write("# Frequency (GHz), Wavelength (cm), T_b (K), Thermal Error (K), Ensemble Error (K)\n")
+        fl = open('ramsey_data_12_10_16.txt', 'w')
+        fl.write("# Frequency (GHz), Wavelength (cm), T_b (K), Ensemble Error (K)\n")
         for f, w, t, e, en in [channel.info_tuple() for channel in self.channel_obj_list]:
-            fl.write(str(f) + ', ' + str(w) + ', ' + str(t) + ', ' + str(e) + ', ' + str(en) + '\n')
+            fl.write(str(f) + ', ' + str(w) + ', ' + str(t) + ', ' + str(en) + '\n')
 
     def print_points(self):
         for f, w, t, e, en in [channel.info_tuple() for channel in self.channel_obj_list]:
-            print "F: ", f, " WL: ", w, "\n\tTb    : ", t, "\n\tTh Er : ", e, "\n\tEns Er: ", en
+            print "F: ", f,\
+                " WL: ", w,\
+                "\n\tTb    : ", t,\
+                "\n\tTh Er : ", e, ',', 100.*e/t, "%",\
+                "\n\tEns Er: ", en, ',', 100.*en/t, "%"
 
 
 def generate_names(path):

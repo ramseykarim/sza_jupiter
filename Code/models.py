@@ -1,6 +1,9 @@
 import numpy as np
+from unpack import generate_names
+
 
 PATH = "/home/ramsey/Documents/Research/Jupiter/SZA/models/"
+TRUE_MODEL_PATH = "/home/ramsey/Documents/Research/pyplanet/Output/"
 
 
 def generate_model(root_name):
@@ -53,7 +56,7 @@ def imke(plotter):
 EXISTING_DATA = [kg, wmap, gibson, imke]
 
 
-def chi_sq((frequencies, tb, tbe_small, tbe_large, model_name)):
+def old_chi_sq((frequencies, tb, tbe_small, tbe_large, model_name)):
     m_freq, m_point = generate_model(model_name)
 
     deg = 3
@@ -70,6 +73,72 @@ def chi_sq((frequencies, tb, tbe_small, tbe_large, model_name)):
     offset = m_point[mid_index] - tb[mid_index]
     if np.abs(offset) > np.min(tbe_large):
         return False
-    chi_squared = m_point - tb - offset
-    chi_squared = np.sum((chi_squared ** 2.) / tbe_small)
-    return chi_squared
+    chi_squared_value = m_point - tb - offset
+    chi_squared_value = np.sum((chi_squared_value ** 2.) / tbe_small)
+    return chi_squared_value
+
+
+def chi_squared((frequencies, tb, tbe_slope, tbe_offset),
+                (model_frequencies, model_tb), deg=5):
+    fit_space = np.where((model_frequencies > frequencies[frequencies.size - 1]) & (model_frequencies < frequencies[0]))
+    model_fit = np.polyfit(model_frequencies[fit_space], model_tb[fit_space], deg=deg)
+    in_offset_range = True
+
+    def model(x):
+        output = np.zeros(x.size)
+        for i, coefficient in enumerate(model_fit):
+            output += coefficient * (x ** (deg - i))
+        return output
+
+    m_point = model(frequencies)
+    mid_index = len(tb) / 2
+    offset = m_point[mid_index] - tb[mid_index]
+    if np.abs(offset) > np.min(tbe_offset):
+        in_offset_range = False
+    chi_squared_value = m_point - tb - offset
+    chi_squared_value = np.sum((chi_squared_value ** 2.) / tbe_slope)
+    return chi_squared_value, in_offset_range
+
+
+def create_parameter_space((s1, e1, step1), (s2, e2, step2), info_tuple, model_path):
+    param1 = np.arange(s1, e1, step1)
+    param2 = np.arange(s2, e2, step2)
+    params = []
+    for p1 in param1:
+        for p2 in param2:
+            params.append((p1, p2))
+    model_path = TRUE_MODEL_PATH + model_path
+    model_iterator = ModelGrid(model_path)
+    chi_squared_values = []
+    while model_iterator.has_next():
+        chi_squared_value, in_range = chi_squared(info_tuple, model_iterator.next())
+        chi_squared_values.append((chi_squared_value, in_range))
+    return params, chi_squared_values
+
+
+class ModelGrid:
+    def __init__(self, path):
+        self.path = path
+        self.file_names = generate_names(path)
+        self._index = -1
+
+    def next(self):
+        if not self.has_next():
+            raise IndexError
+        self._index += 1
+        file_name = self.path + self.file_names[self._index]
+        data = np.loadtxt(file_name)
+        return data[:, 0], data[:, 1]
+
+    def has_next(self):
+        return self._index < len(self.file_names) - 1
+
+    def current(self):
+        self._index -= 1
+        return self.next()
+
+    def reinitialize(self):
+        self._index = 1
+
+    def get_index(self):
+        return self._index

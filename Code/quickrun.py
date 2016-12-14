@@ -4,8 +4,8 @@ Quick run script for plotting T_B data
 import unpack as up
 import plotting as pltt
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-# import error_investigation as ei
 import datacontainer as dc
 import models as mdl
 import jackknife as jk
@@ -22,9 +22,27 @@ def paint_with_colors_of_wind():
 
 def run_normal():
     u = up.Unpack().prepare().adjust()
-    p = pltt.Plotting()
+    data = dc.DataContainer().populate()
+    plt.figure(20)
+    p = pltt.Plotting(wl=True)
     p.add_my_data(u)
     p.add_all_other_data()
+    # p.add_model_plot("best", color='green', line_sty='--', label="45% above 1.5bar")
+    p.add_model_plot("paulsolar", color='orange', line_sty='o', linewidth=2.0)
+    p.add_model_plot("paulsolar_new", color='blue', line_sty='o', linewidth=2.0)
+    p.add_model_plot("paulvla72x", color='cyan', line_sty='o', linewidth=2.0)
+    # p.add_model_plot("psolartweaks", color='maroon', line_sty='-.')
+    # p.add_model_plot("p72xtweaks", color='orange', line_sty='-.')
+    comp, in_range = mdl.chi_squared(data.yield_model_comp_info(), mdl.generate_model("paulsolar"))
+    comp2, in_range = mdl.chi_squared(data.yield_model_comp_info(), mdl.generate_model("paulsolar_new"))
+    comp3, in_range = mdl.chi_squared(data.yield_model_comp_info(), mdl.generate_model("paulvla72x"))
+    # comp4, in_range = mdl.chi_squared(data.yield_model_comp_info(), mdl.generate_model("50abv2bar_new"))
+    # u.print_points()
+    # print comp
+    # print comp2, comp3, comp4
+    # plt.xlim([20, 100])
+    plt.figure(20)
+    plt.ylim([120, 200])
     p.show_prep()
     p.show()
 
@@ -70,34 +88,12 @@ def run_chisq():
     data = dc.DataContainer().populate()
     model_dict = {}
     for m in MODELS:
-        comp = mdl.chi_sq(data.yield_model_comp(m))
+        # comp = mdl.old_chi_sq(data.old_yield_model_comp(m))
+        comp, in_range = mdl.chi_squared(data.yield_model_comp_info(), mdl.generate_model(m))
         model_dict[m] = comp
     for (key, value) in [(key, value) for (key, value) in sorted(model_dict.items(), key=lambda x: x[1])]:
         if value:
             print key + " - > ", value
-
-
-def run_model_comp():
-    p = pltt.Plotting()
-    plt.figure(1)
-    plt.subplot(121)
-    p.add_model_plot("saturated", color='k')
-    p.add_model_plot("50abv1bar", color='blue')
-    p.add_model_plot("50abv2bar", color='red')
-    p.add_model_plot("80abv2bar", color='green')
-    p.add_model_plot("saturated_newnh3", color='k', line_sty='-.')
-    p.add_model_plot("50abv1bar_newnh3", color='blue', line_sty='-.')
-    p.add_model_plot("50abv2bar_newnh3", color='red', line_sty='-.')
-    p.add_model_plot("80abv2bar_newnh3", color='green', line_sty='-.')
-    plt.title("Dotted - new nh3, Solid - old nh3")
-    plt.subplot(122)
-    p.add_model_compare("saturated", color='k')
-    p.add_model_compare("50abv1bar", color='blue')
-    p.add_model_compare("50abv2bar", color='red')
-    p.add_model_compare("80abv2bar", color='green')
-    plt.title("New nh3 - old nh3")
-    p.show_prep()
-    p.show()
 
 
 def run_models():
@@ -114,15 +110,34 @@ def run_models():
 
 
 def run_raw():
-    norm = 32
+    """
+    Figure-ready, raw data before and after normalization
+    """
     u = up.Unpack().prepare()
     plt.figure()
+    plt.subplot(121)
+    plt.title("Raw Data - Before Normalization")
+    plt.xlabel("Date (MJD)")
+    plt.ylabel("Flux density (jy)")
+    date_max = np.max(u.dates_copss_array)
+    date_min = np.min(u.dates_copss_array)
+    date_range = date_max - date_min
+    l_padding = 0.05
+    r_padding = 0.2
     for ch in u.channel_obj_list:
         plt.errorbar(u.dates_copss_array, ch.flux, yerr=ch.error, fmt='.')
-    plt.figure()
+    plt.xlim(date_min - l_padding * date_range, np.max(u.dates_copss_array) + l_padding * date_range)
+    plt.subplot(122)
+    plt.title("Raw Data - After Normalization")
+    plt.xlabel("Date (MJD)")
+    plt.ylabel("Flux density (jy)")
     u.adjust()
     for ch in u.channel_obj_list:
-        plt.errorbar(u.dates_copss_array, ch.flux / ch.flux[norm], yerr=ch.error / ch.flux[norm], fmt='.')
+        plt.errorbar(u.dates_copss_array, ch.flux, yerr=ch.error, fmt='.')
+        plt.text(date_max + 3,
+                 np.nanmean(ch.flux),
+                 "%.3f GHz" % ch.frequency_ghz, fontsize=8)
+    plt.xlim(date_min - l_padding * date_range, np.max(u.dates_copss_array) + r_padding * date_range)
     plt.show()
 
 
@@ -150,7 +165,7 @@ def run_model_grid_old_gas_profile():
     for p1 in param1:
         for p2 in param2:
             params.append((p1, p2))
-    model_path = "/home/ramsey/Documents/Research/pyplanet/Output/Jupiter_frequency_20161130_0533/Jupiter000"
+    model_path = mdl.TRUE_MODEL_PATH + "Jupiter_frequency_20161130_0533/Jupiter000"
     suffix = ".dat"
     names = ["%02d" % x for x in range(18)]
     legend = []
@@ -164,6 +179,65 @@ def run_model_grid_old_gas_profile():
         plt.plot(data[:, 0] - 0.1 + (df * i), data[:, 1], m)
         legend.append("(P*=%.1f, P<%.1f)" % (params[i][0], params[i][1]))
     plt.legend(legend)
+    plt.show()
+
+
+def run_model_grid():
+    #  Generate parameter space as it was during this run (12/01/2016) # 1
+    data = dc.DataContainer().populate()
+    data_model_info = data.yield_model_comp_info()
+    params_1, chi_squared_values_1 = mdl.create_parameter_space((0.6, 0.9, 0.05), (0.5, 1.5, 0.1),
+                                                                data_model_info, "Jupiter_frequency_20161201_1905/")
+    params_2, chi_squared_values_2 = mdl.create_parameter_space((0.3, 0.6, 0.05), (0.5, 1.5, 0.1),
+                                                                data_model_info, "Jupiter_frequency_20161201_2334/")
+    params_3, chi_squared_values_3 = mdl.create_parameter_space((0.9, 1.3, 0.05), (0.5, 1.5, 0.1),
+                                                                data_model_info, "Jupiter_frequency_20161204_1635/")
+    params_4, chi_squared_values_4 = mdl.create_parameter_space((0.3, 0.6, 0.05), (1.5, 2.5, 0.1),
+                                                                data_model_info, "Jupiter_frequency_20161205_1007/")
+    params_5, chi_squared_values_5 = mdl.create_parameter_space((0.3, 1.3, 0.05), (0.0, 0.5, 0.1),
+                                                                data_model_info, "Jupiter_frequency_20161213_1403/")
+    params_6, chi_squared_values_6 = mdl.create_parameter_space((1.3, 1.5, 0.05), (0.5, 1.0, 0.1),
+                                                                data_model_info, "Jupiter_frequency_20161213_1616/")
+    params = params_1 + params_2 + params_3 + params_4 + params_5 + params_6
+    chi_squared_values = chi_squared_values_1 + chi_squared_values_2 + \
+                         chi_squared_values_3 + chi_squared_values_4 + \
+                         chi_squared_values_5 + chi_squared_values_6
+
+    # Plot up results
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    saturation = [x[0] for x in params]
+    cutoff = [x[1] for x in params]
+    chi_squared_value = [x[0] for x in chi_squared_values]
+    test_array = np.array(chi_squared_value)
+    lowest_val = np.where(chi_squared_value == np.min(chi_squared_value))
+    test_array1 = [params[i] for i in lowest_val[0]]
+    print "Lowest Chi Squared Values:"
+    for (p1, p2) in test_array1:
+        print "Sat: %.2f, Cutoff:%.2f" % (round(p1, 2), round(p2, 1))
+    in_range = [x[1] for x in chi_squared_values]
+    ax.plot([x for x, i in zip(saturation, in_range) if i],
+            [x for x, i in zip(cutoff, in_range) if i],
+            zs=[x for x, i in zip(chi_squared_value, in_range) if i],
+            color='black',
+            marker='o', linestyle='None')
+    ax.plot([x for x, i in zip(saturation, in_range) if not i],
+            [x for x, i in zip(cutoff, in_range) if not i],
+            zs=[x for x, i in zip(chi_squared_value, in_range) if not i],
+            color='red',
+            marker='o', linestyle='None')
+
+    plt.xlabel("Saturation (multiplier)")
+    plt.ylabel("Cutoff (bar)")
+
+    #  Visually compare to points
+    # plt.figure()
+    # model_iterator_1.reinitialize()
+    # while model_iterator_1.has_next():
+    #     f, tb = model_iterator_1.next()
+    #     plt.plot(f, tb)
+    # p = pltt.Plotting()
+    # p.add_my_data(data)
     plt.show()
 
 
@@ -209,7 +283,7 @@ def run_air_mass_investigation():
     freqs = np.array(freqs)
     slopes = np.array(slopes)
     s_fit = np.polyfit(freqs, slopes, deg=1)
-    s_fit_line = freqs*s_fit[0] + (freqs**0.)*s_fit[1]
+    s_fit_line = freqs * s_fit[0] + (freqs ** 0.) * s_fit[1]
     plt.plot(freqs, slopes, 'x', color='maroon')
     plt.plot(freqs, s_fit_line, '--', color='cyan')
     plt.ylim([-.1, .2])
@@ -222,4 +296,4 @@ def run_air_mass_investigation():
     plt.show()
 
 
-run_normal()
+run_model_grid()

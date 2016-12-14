@@ -36,5 +36,8 @@ class DataContainer:
     def get_original_flux_errors(self):
         return [channel.error for channel in self.channels]
 
-    def yield_model_comp(self, model_name):
+    def yield_model_comp_info(self):
+        return self.frequencies, self.tb, self.tbe_slope, self.tbe_offset
+
+    def old_yield_model_comp(self, model_name):
         return self.frequencies, self.tb, self.tbe_slope, self.tbe_offset, model_name
