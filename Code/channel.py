@@ -60,7 +60,7 @@ class Channel:
     def synchrotron_adj(self, synchrotron):
         self.flux_avg -= synchrotron
 
-    def cmb_unit_adj(self):
+    def cmb_unit_adj(self):  # TODO Think about rewriting this with formal error propagation
         f_i = self.flux_avg * jy_to_w
         sigma_i = self.error_avg * jy_to_w
         sigma_hat = self.ensemble_error * jy_to_w
@@ -100,10 +100,11 @@ class Channel:
         alt = original_alt[finite_i]
         degree = 1
         alt_fit = np.polyfit(alt, flux, deg=degree)
-        alt_solution = np.zeros(len(alt))
-        for i, coefficient in enumerate(alt_fit[:degree]):
-            alt_solution += coefficient * (alt ** (degree - i))
-        self.flux[finite_i] -= alt_solution
+        slope = alt_fit[0]
+        t0 = flux[flux.size - 1]
+        a0 = alt[alt.size - 1]
+        alt_solution = slope * (alt - a0) / t0 + 1
+        self.flux[finite_i] /= alt_solution
 
     def info_tuple(self):
         return (self.frequency_ghz,

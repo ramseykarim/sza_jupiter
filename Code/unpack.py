@@ -5,6 +5,7 @@ import numpy as np
 import channel as ch
 # import stats as st
 import subprocess
+import sys
 
 PATH = "/home/ramsey/Documents/Research/Jupiter/SZA/"
 COPSS_PATH = PATH + "TXTs/jupiter_fluxes_flagged_USETHIS.txt"
@@ -101,11 +102,18 @@ class Unpack:
 
     def adjust(self):
         self.distance_adj()
-        # self.alt_adj()
+        self.alt_adj()
         self.prelim_adjust()
         self.average_adj()
+        # print "AVG"
+        # [sys.stdout.write(str(x.frequency_ghz) + ": " + str(round(x.flux_avg, 3)) + "\n") for x in self.channel_obj_list]
         self.synchrotron_adj()
+        # print "SYNCH"
+        # [sys.stdout.write(str(x.frequency_ghz) + ": " + str(round(x.flux_avg, 3)) + "\n") for x in self.channel_obj_list]
         self.cmb_unit_adj()
+        # print "CMB (Kelvin)"
+        # [sys.stdout.write(str(x.frequency_ghz) + ": " + str(round(x.tb, 3)) + "\n") for x in self.channel_obj_list]
+        [sys.stdout.write(str(round(x.tb_error_slope*1000, 3)) + " " + str(round(x.tb_error_offset, 3)) + "\n") for x in self.channel_obj_list]
         return self
 
     def prelim_adjust(self):
@@ -120,7 +128,7 @@ class Unpack:
     def alt_adj(self):
         for channel in self.channel_obj_list:
             channel.altitude_adj(self.get_j_el())
-            channel.altitude_adj(self.get_m_el())
+            # channel.altitude_adj(self.get_m_el())
         return self
 
     def average_adj(self):
@@ -131,6 +139,11 @@ class Unpack:
         f0 = 28.5
         j0 = 1.5
         synchrotron = j0 * ((np.array(self.frequency_list_ghz) / f0)**(-0.4))
+        # plt.figure(19)
+        # plt.plot(self.frequency_list_ghz, synchrotron, '-', color='black')
+        # plt.xlabel("Frequency (GHz)")
+        # plt.ylabel("Flux Density (jy)")
+        # plt.title("Synchrotron Model")
         for i, channel in enumerate(self.channel_obj_list):
             channel.synchrotron_adj(synchrotron[i])
 
@@ -144,7 +157,7 @@ class Unpack:
         return self
 
     def write_points(self):
-        fl = open('ramsey_data_12_10_16.txt', 'w')
+        fl = open('ramsey_data_12_14_16.txt', 'w')
         fl.write("# Frequency (GHz), Wavelength (cm), T_b (K), Ensemble Error (K)\n")
         for f, w, t, e, en in [channel.info_tuple() for channel in self.channel_obj_list]:
             fl.write(str(f) + ', ' + str(w) + ', ' + str(t) + ', ' + str(en) + '\n')
