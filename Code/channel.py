@@ -21,7 +21,7 @@ class Channel:
         self.frequency_ghz = frequency_ghz
         self.wavelength_cm = (cst.c / frequency_ghz) * 1e-7
         self.flux_avg = 0.
-        self.error_avg = 0.  # Janskys, very small, good for slope
+        self.error_avg = 0.  # Janskys, smaller, good for slope
         self.ensemble_error = 0.  # Janskys, ~5%, good for absolute calibration
         self.tb = 0.
         self.tb_error_slope = 0.
@@ -53,9 +53,6 @@ class Channel:
         self.flux_avg = np.nansum(weights * self.flux) * variance_sq
         accuracy_error_sq = np.nansum(weights * (self.flux - self.flux_avg)**2.) * variance_sq
         self.ensemble_error = np.sqrt(accuracy_error_sq + variance_sq)
-        # total_error_sq_inv = (1. / accuracy_error_sq) + (1. / variance_sq)
-        # self.error_avg = 1. / np.sqrt(total_error_sq_inv)
-        self.error_avg = np.nanmean(self.error/self.flux) * self.flux_avg
 
     def synchrotron_adj(self, synchrotron):
         self.flux_avg -= synchrotron
@@ -100,11 +97,9 @@ class Channel:
         alt = original_alt[finite_i]
         degree = 1
         alt_fit = np.polyfit(alt, flux, deg=degree)
-        slope = alt_fit[0]
-        t0 = flux[flux.size - 1]
-        a0 = alt[alt.size - 1]
-        alt_solution = slope * (alt - a0) / t0 + 1
-        self.flux[finite_i] /= alt_solution
+        a0 = float(alt[alt == np.max(alt)])
+        t0 = polynomial_single(alt_fit, a0)
+        self.flux[finite_i] *= (t0 / (polynomial(alt_fit, alt)))
 
     def info_tuple(self):
         return (self.frequency_ghz,
@@ -115,4 +110,20 @@ class Channel:
 
     def copy(self):
         return copy.deepcopy(self)
+
+
+def polynomial(fit, x):
+    deg_proxy = len(fit) - 1
+    output = np.zeros(x.size)
+    for i, c in enumerate(fit):
+        output += (c * (x**float(deg_proxy - i)))
+    return output
+
+
+def polynomial_single(fit, x):
+    deg_proxy = len(fit) - 1
+    output = 0.
+    for i, c in enumerate(fit):
+        output += (c * (x**float(deg_proxy - i)))
+    return output
 

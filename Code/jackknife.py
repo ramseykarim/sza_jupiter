@@ -51,9 +51,9 @@ JACKKNIFE_TESTS = {
     "Even-Odd": (even_odd, 'o', "blue"),
     "First-Last": (first_last, '^', "green"),
     "Jupiter El": (j_elevation, 's', "red"),
-    # "Mars El": (m_elevation, 'D', "maroon"),
-    # "Half": (first_half, 'p', "cyan"),
-    "Debug": (debug, '.', "orange"),
+    "Mars El": (m_elevation, 'D', "maroon"),
+    "Half": (first_half, 'p', "cyan"),
+    # "Debug": (debug, '.', "orange"),
 }
 
 

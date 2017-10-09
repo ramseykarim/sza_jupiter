@@ -42,12 +42,11 @@ def unpack_copss(csv_file, frequency_list_ghz, c_type=ch.Channel):
     date_array = raw_all[:, 0]
     channel_list = []
     for i in range(15):
-        channel_list.append(c_type(raw_all[:, i*2 + 1:i*2 + 3], frequency_list_ghz[i]))
+        channel_list.append(c_type(raw_all[:, i * 2 + 1:i * 2 + 3], frequency_list_ghz[i]))
     return date_array, channel_list
 
 
 class Unpack:
-
     def __init__(self):
         self.mjd = 2400000.5
         self.frequency_list_ghz = [34.688000, 34.188000, 33.688000,
@@ -70,8 +69,8 @@ class Unpack:
         return self
 
     def get_temperatures(self):
-        return np.array([channel.tb for channel in self.channel_obj_list]),\
-               np.array([channel.tb_error_slope for channel in self.channel_obj_list]),\
+        return np.array([channel.tb for channel in self.channel_obj_list]), \
+               np.array([channel.tb_error_slope for channel in self.channel_obj_list]), \
                np.array([channel.tb_error_offset for channel in self.channel_obj_list])
 
     def get_frequencies(self):
@@ -105,15 +104,9 @@ class Unpack:
         self.alt_adj()
         self.prelim_adjust()
         self.average_adj()
-        # print "AVG"
-        # [sys.stdout.write(str(x.frequency_ghz) + ": " + str(round(x.flux_avg, 3)) + "\n") for x in self.channel_obj_list]
+        self.error_adj()
         self.synchrotron_adj()
-        # print "SYNCH"
-        # [sys.stdout.write(str(x.frequency_ghz) + ": " + str(round(x.flux_avg, 3)) + "\n") for x in self.channel_obj_list]
         self.cmb_unit_adj()
-        # print "CMB (Kelvin)"
-        # [sys.stdout.write(str(x.frequency_ghz) + ": " + str(round(x.tb, 3)) + "\n") for x in self.channel_obj_list]
-        [sys.stdout.write(str(round(x.tb_error_slope*1000, 3)) + " " + str(round(x.tb_error_offset, 3)) + "\n") for x in self.channel_obj_list]
         return self
 
     def prelim_adjust(self):
@@ -121,35 +114,51 @@ class Unpack:
 
     def distance_adj(self):
         corresponding_distances = self.get_distances()
-        mod_factor = (corresponding_distances / 4.04)**2.
+        mod_factor = (corresponding_distances / 4.04) ** 2.
         for channel in self.channel_obj_list:
             channel.distance_adj(mod_factor)
+        return self
 
     def alt_adj(self):
         for channel in self.channel_obj_list:
             channel.altitude_adj(self.get_j_el())
-            # channel.altitude_adj(self.get_m_el())
         return self
 
     def average_adj(self):
         for channel in self.channel_obj_list:
             channel.average()
+        return self
+
+    def error_adj(self):
+        flux_grid = np.array([channel.flux for channel in self.channel_obj_list])
+        flux_error_grid = np.array([channel.error for channel in self.channel_obj_list])
+        flux_avg_vector = np.array([channel.flux_avg for channel in self.channel_obj_list])
+        day_ax = 0
+        frq_ax = 1
+        fractional_error_c = np.nanmean(flux_error_grid / flux_grid, axis=frq_ax) * flux_avg_vector
+        flux_avg_vector = flux_avg_vector.reshape((15, 1))
+        flux_grid /= flux_avg_vector
+        flux_grid -= np.nanmean(flux_grid, axis=day_ax)
+        flux_grid *= flux_avg_vector
+        spread_daily_deviation_c = np.nanstd(flux_grid, axis=frq_ax)
+        mean_daily_deviation_c = np.nanmean(flux_grid, axis=frq_ax)
+        relative_error = np.sqrt(fractional_error_c**2 + spread_daily_deviation_c**2 + mean_daily_deviation_c**2)
+        for channel, e in zip(self.channel_obj_list, relative_error):
+            channel.error_avg = e
+        return self
 
     def synchrotron_adj(self):
         f0 = 28.5
         j0 = 1.5
-        synchrotron = j0 * ((np.array(self.frequency_list_ghz) / f0)**(-0.4))
-        # plt.figure(19)
-        # plt.plot(self.frequency_list_ghz, synchrotron, '-', color='black')
-        # plt.xlabel("Frequency (GHz)")
-        # plt.ylabel("Flux Density (jy)")
-        # plt.title("Synchrotron Model")
+        synchrotron = j0 * ((np.array(self.frequency_list_ghz) / f0) ** (-0.4))
         for i, channel in enumerate(self.channel_obj_list):
             channel.synchrotron_adj(synchrotron[i])
+        return self
 
     def cmb_unit_adj(self):
         for channel in self.channel_obj_list:
             channel.cmb_unit_adj()
+        return self
 
     def error_investigation_init(self):
         self.distance_adj()
@@ -157,18 +166,18 @@ class Unpack:
         return self
 
     def write_points(self):
-        fl = open('ramsey_data_12_14_16.txt', 'w')
-        fl.write("# Frequency (GHz), Wavelength (cm), T_b (K), Ensemble Error (K)\n")
-        for f, w, t, e, en in [channel.info_tuple() for channel in self.channel_obj_list]:
-            fl.write(str(f) + ', ' + str(w) + ', ' + str(t) + ', ' + str(en) + '\n')
+        fl = open('ramsey_data_07_29_17.txt', 'w')
+        fl.write("# Frequency (GHz), Wavelength (cm), T_b (K), Absolute Uncertainty (K), Relative Uncertainty (K)\n")
+        for f, w, t, er, ea in [channel.info_tuple() for channel in self.channel_obj_list]:
+            fl.write(str(f) + ', ' + str(w) + ', ' + str(t) + ', ' + str(ea) + ', ' + str(er) + '\n')
 
     def print_points(self):
         for f, w, t, e, en in [channel.info_tuple() for channel in self.channel_obj_list]:
-            print "F: ", f,\
-                " WL: ", w,\
-                "\n\tTb    : ", t,\
-                "\n\tTh Er : ", e, ',', 100.*e/t, "%",\
-                "\n\tEns Er: ", en, ',', 100.*en/t, "%"
+            print "F: ", f, \
+                " WL: ", w, \
+                "\n\tTb    : ", t, \
+                "\n\tTh Er : ", e, ',', 100. * e / t, "%", \
+                "\n\tEns Er: ", en, ',', 100. * en / t, "%"
 
 
 def generate_names(path):
