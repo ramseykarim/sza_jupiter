@@ -168,10 +168,32 @@ def wmap():
 
 
 def gibson():
-    return [28.5], [142.9], [2.3], 'red', 's', "Gibson 2005"
+    # return [28.5], [142.9], [2.3], 'red', 's', "Gibson 2005"
+    return [GIBSON_F], [GIBSON_TB], [GIBSON_TBE], 'red', 's', "Gibson 2005"
 
 
 def imke():
+    f = [4.52, 5.49, 6.5, 7.5,
+         8.5, 9.52, 10.46, 11.46,
+         13.18, 14.21, 15.18, 16.21,
+         17.38
+         ]
+
+    tb = [247.5, 223.3, 207.6, 192.9,
+          183.3, 177.7, 172.8, 167.6,
+          164.0, 158.7, 155.0, 151.3,
+          148.5
+          ]
+
+    tbe = [7.4, 6.7, 6.2, 5.8,
+           5.499, 5.331, 5.184, 5.028,
+           4.92, 4.761, 4.65, 4.539,
+           4.455
+           ]
+    return f, tb, tbe, 'orange', 'v', "de Pater 2016"
+
+
+def imke_old():
     f = [4.52, 5.49, 6.5, 7.5,
          8.5, 9.52, 10.46, 11.46,
          13.18, 14.21, 15.18, 16.21,
@@ -199,6 +221,7 @@ def chi_squared((frequencies, tb, tbe_slope, tbe_offset),
 
     def model(x):
         return polynomial(model_fit, x)
+
     bad_freq = 33.188
     freqs_limited_33d188 = frequencies[np.where(frequencies != bad_freq)]
     matching_points = model(freqs_limited_33d188)
@@ -241,7 +264,7 @@ def polynomial(fit, x):
     deg_proxy = len(fit) - 1
     output = np.zeros(x.size)
     for i, c in enumerate(fit):
-        output += (c * (x**float(deg_proxy - i)))
+        output += (c * (x ** float(deg_proxy - i)))
     return output
 
 
@@ -249,7 +272,7 @@ def polynomial_single(fit, x):
     deg_proxy = len(fit) - 1
     output = 0.
     for i, c in enumerate(fit):
-        output += (c * (x**float(deg_proxy - i)))
+        output += (c * (x ** float(deg_proxy - i)))
     return output
 
 

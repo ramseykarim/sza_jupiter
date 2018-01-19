@@ -118,7 +118,7 @@ def run_large_emission_plot_f():
     produce_entire_model(22, 56, 42, color='red', linestyle='--', label="This work", linewidth=2.)
     produce_entire_model(15, 50, 39, color='black', linestyle='--', label="Low limits", linewidth=0.5)
     produce_entire_model(200, 64, 45, color='black', linestyle=':', label="High limits", linewidth=0.5)
-    produce_entire_model(100, 100, 42, color='cyan', linestyle='--', label="Adjusted Deep only", linewidth=1.)
+    produce_entire_model(100, 100, 42, color='cyan', linestyle='--', label="Adjusted $\\alpha_{d}$ only", linewidth=1.)
     produce_entire_model(100, 56, 100, color='cyan', linestyle=':', label="Adjusted RH only", linewidth=1.)
     p.add_my_data(u)
     p.add_all_other_data()
@@ -146,7 +146,7 @@ def run_large_emission_plot_f():
     produce_entire_model(200, 64, 45, color='black',
                          linestyle=':', label="High limits", linewidth=0.5,
                          ax=inset_ax)
-    produce_entire_model(100, 100, 42, color='cyan', linestyle='--', label="Adjusted Deep only", linewidth=1.)
+    produce_entire_model(100, 100, 42, color='cyan', linestyle='--', label="Adjusted $\\alpha_{d}$ only", linewidth=1.)
     produce_entire_model(100, 56, 100, color='cyan', linestyle=':', label="Adjusted RH only", linewidth=1.)
     p.add_my_data(u, ax=inset_ax)
     p.add_all_other_data(ax=inset_ax)
@@ -337,26 +337,43 @@ def run_get_relative_uncertainty():
     average_daily_deviation_by_channel = np.nanmean(flux_grid, axis=frq_axis)
 
     # Deviation & spread!
-    # plt.plot(frequency_vector, flux_grid)  # THIS WARRANTS A QUESTION
-    # plt.errorbar(frequency_vector, average_daily_deviation_by_channel,
-    #              yerr=spread_daily_deviation_by_channel, fmt='o')
-    # plt.xlabel("Frequency (GHz)")
-    # plt.ylabel("Mean Deviation from Normalized Daily Average (jy)")
+    plt.plot(frequency_vector, flux_grid)  # THIS WARRANTS A QUESTION
+    plt.errorbar(frequency_vector, average_daily_deviation_by_channel,
+                 yerr=spread_daily_deviation_by_channel, fmt='o')
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("Daily Deviation from Normalized Channel Average (jy)")
+
+    # The paragraph below finds the dates of deviation, sorted by the pivot slope
+    # daily_slopes = []
+    # for i in range(flux_grid.shape[1]):
+    #     finite_i = np.isfinite(flux_grid[:, i])
+    #     flux_finite = flux_grid[:, i][finite_i]
+    #     freq_finite = frequency_vector[:, 0][finite_i]
+    #     degree = 1
+    #     daily_fit = np.polyfit(freq_finite, flux_finite, deg=degree)
+    #     daily_slopes.append(daily_fit[0])
+    # daily_slopes = np.array(daily_slopes)
+    # sorted_days = u.get_dates()[np.argsort(daily_slopes)]
+    # sorted_slopes = daily_slopes[np.argsort(daily_slopes)]
+    # fl = open('dailydeviation.txt', 'w')
+    # fl.write("# Date (MJD), Daily deviation slope (jy/GHz)\n")
+    # for d, s in zip(sorted_days, sorted_slopes):
+    #     fl.write(str(d) + ', ' + str(s) + '\n')
 
     spread_error_by_channel = spread_daily_deviation_by_channel.reshape((15, 1))
     deviation_error_by_channel = average_daily_deviation_by_channel.reshape((15, 1))
 
+    # THE NEXT PARAGRAPH MAKES A USEFUL PLOT
     # check order of relative error contributions
-    plt.plot(frequency_vector, np.sqrt(fractional_error_by_channel ** 2.), 'x', label="Fractional")
-    plt.plot(frequency_vector, np.sqrt(deviation_error_by_channel ** 2.), '^', label="Mean Deviation")
-    plt.plot(frequency_vector, np.sqrt(spread_error_by_channel ** 2.), 'D', label="Spread Deviation")
-    plt.yscale('log')
-
+    # plt.plot(frequency_vector, np.sqrt(fractional_error_by_channel ** 2.), 'x', label="Fractional")
+    # plt.plot(frequency_vector, np.sqrt(deviation_error_by_channel ** 2.), '^', label="Mean Deviation")
+    # plt.plot(frequency_vector, np.sqrt(spread_error_by_channel ** 2.), 'D', label="Spread Deviation")
+    # plt.yscale('log')
     # FINAL VALUE !!!!!!!!!!!!!!!!!!!!!!!!!!
-    relative_uncertainty = fractional_error_by_channel ** 2 + deviation_error_by_channel ** 2 + spread_error_by_channel ** 2
-    plt.plot(frequency_vector, np.sqrt(relative_uncertainty), '*', label="Relative")
-    print (np.sqrt(relative_uncertainty) * 100 / frequency_vector).reshape(15)
-    print np.sqrt(relative_uncertainty).reshape(15)
+    # relative_uncertainty = fractional_error_by_channel ** 2 + deviation_error_by_channel ** 2 + spread_error_by_channel ** 2
+    # plt.plot(frequency_vector, np.sqrt(relative_uncertainty), '*', label="Relative")
+    # print (np.sqrt(relative_uncertainty) * 100 / frequency_vector).reshape(15)
+    # print np.sqrt(relative_uncertainty).reshape(15)
 
     # something else interesting kinda sorta
     # flux_grid_errors = np.nanstd(flux_grid, axis=a) / np.nansum(np.reciprocal(flux_error_grid**2.), axis=a)
@@ -926,7 +943,7 @@ def run_atmosphere_graphs():
     # plt.subplot(121)
 
     # plot logistics
-    plt.title("Temperature-Pressure Profile")
+    plt.title("a) Temperature-Pressure Profile")
     plt.xscale('log')
     plt.yscale('log')
     plt.ylim([1.e1, 1.e-1])
@@ -962,7 +979,7 @@ def run_atmosphere_graphs():
 
     # CONSTITUENT ABUNDANCES
     plt.subplot(122)
-    plt.title("NH3 Abundance Models")
+    plt.title("b) NH$_{3}$ Abundance Models")
 
     def plot_profile(name, color='red', linestyle='-', label='_nolegend_', linewidth=1.):
         nh3_abundance = np.loadtxt(file_stub + name)
@@ -970,19 +987,19 @@ def run_atmosphere_graphs():
                  color=color, linestyle=linestyle, label=label, linewidth=linewidth)
 
     plot_profile("nh3_abundance_nominal.dat", color='blue', linestyle='-',
-                 label="NH3$-\ P\sim 0.1: 1.2\\times 10^{-7} \ -\ 100\% RH \ -\ P\sim 8: 5.72\\times 10^{-4}$"
+                 label="NH$_{3} -\ P\sim 0.1: 1.2\\times 10^{-7} \ -\ 100\% RH \ -\ P\sim 8: 5.72\\times 10^{-4}$"
                        " (Nominal)",
                  linewidth=1)
     plot_profile("nh3_abundance_t22rh56d42.dat", color='red', linestyle='--',
-                 label="NH3$-\ P\sim 0.1: 2.8\\times 10^{-8} \ -\ 55\% RH \ -\ P\sim 8: 2.40\\times 10^{-4}$"
+                 label="NH$_{3} -\ P\sim 0.1: 2.8\\times 10^{-8} \ -\ 55\% RH \ -\ P\sim 8: 2.40\\times 10^{-4}$"
                        " (This work)",
                  linewidth=2)
     plot_profile("nh3_abundance_t15rh50d39.dat", color='black', linestyle='--',
-                 label="NH3$-\ P\sim 0.1: 1.9\\times 10^{-8} \ -\ 50\% RH \ -\ P\sim 8: 2.26\\times 10^{-4}$"
+                 label="NH$_{3} -\ P\sim 0.1: 1.9\\times 10^{-8} \ -\ 50\% RH \ -\ P\sim 8: 2.26\\times 10^{-4}$"
                        " (Low limits)",
                  linewidth=0.5)
     plot_profile("nh3_abundance_t200rh64d45.dat", color='black', linestyle=':',
-                 label="NH3$-\ P\sim 0.1: 2.4\\times 10^{-7} \ -\ 64\% RH \ -\ P\sim 8: 2.57\\times 10^{-4}$"
+                 label="NH$_{3} -\ P\sim 0.1: 2.4\\times 10^{-7} \ -\ 64\% RH \ -\ P\sim 8: 2.57\\times 10^{-4}$"
                        " (High limits)",
                  linewidth=0.5)
 
@@ -1036,4 +1053,4 @@ def run_atmosphere_graphs():
     plt.show()
 
 
-run_atmosphere_graphs()
+run_large_emission_plot_wl()

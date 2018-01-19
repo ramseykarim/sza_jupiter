@@ -32,9 +32,9 @@ class Plotting:
         else:
             thing = plt
         thing.errorbar(x_axis, tb, yerr=tb_ens_err, fmt='o', markersize=5.,
-                       color='black', mec='black', mfc='white', mew=psize, label='SZA')
+                       color='grey', mec='black', mfc='white', mew=psize, label='_nolegend_')
         thing.errorbar(x_axis, tb, yerr=tb_rel_err, fmt='o', capsize=4., markersize=5.,
-                       color='black', mec='black', mfc='white', mew=psize, label='_nolegend_')
+                       color='black', mec='black', mfc='white', mew=psize, label='CARMA')
 
     def add_model_plot(self, model_path, color='k', line_sty='-', label=None, linewidth=2.0, ax=None):
         if label is None:
