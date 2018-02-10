@@ -21,6 +21,107 @@ def paint_with_colors_of_wind():
                   ])
 
 
+def run_write_out_brightness_model():
+    def produce_name(top, rh, deep):
+        model_name_1 = "/home/ramsey/Documents/Research/pyplanet/Output/final_models/t%drh" % top
+        model_name_2 = "%dd%d.dat" % (rh, deep)
+        return model_name_1 + model_name_2
+
+    f_work, tb_work = mdl.generate_model(produce_name(22, 56, 42))
+    # f_hi, tb_hi = mdl.generate_model(produce_name(200, 64, 45))
+    # f_lo, tb_lo = mdl.generate_model(produce_name(22, 50, 39))
+    plt.plot(f_work, tb_work)
+    plt.xscale('log')
+    plt.show()
+    # write_array = np.stack([f_work, tb_work], axis=1)
+    # np.savetxt("../TXTs/jupiter_modelTb_ramseycarma.dat", write_array,
+    #            header="F(GHz) T_b(K)", fmt="%.6E")
+
+
+def run_write_out_tc_model():
+    p_calc, nh3_calc = mdl.physical_tcm_model_writeout(.22, .56, .42)
+
+
+def run_reproducibility():
+    file_stub = "/home/ramsey/Documents/Research/pyplanet/Jupiter/for_ramsey/"
+
+    def plot_profile(name, color='red', linestyle='-', label='_nolegend_', linewidth=1.):
+        nh3_abundance = np.loadtxt(file_stub + name)
+        msg = "; # of points = %d" % len(nh3_abundance[1, :])
+        plt.plot(nh3_abundance[1, :], nh3_abundance[0, :],
+                 color=color, linestyle=linestyle, label=label + msg, linewidth=linewidth)
+
+    grid_nominal = "nh3_abundance_nominal.dat"
+    grid_this_work = "nh3_abundance_t22rh56d42.dat"
+    grid_hi_lim, grid_lo_lim = "nh3_abundance_t200rh64d45.dat", "nh3_abundance_t15rh50d39.dat"
+
+    pre_grid_data = np.genfromtxt('/home/ramsey/Documents/Research/pyplanet/Jupiter/jupiter.paulvla72',
+                                  skip_header=1)
+    t = pre_grid_data[:, 1]
+    p = pre_grid_data[:, 2]
+    nh3 = pre_grid_data[:, 6]
+
+    plot_profile("nh3_abundance_nominal.dat", color='blue', linestyle='-',
+                 # label="NH$_{3} -\ P\sim 0.1: 1.2\\times 10^{-7} \ -\ 100\% RH \ -\ P\sim 8: 5.72\\times 10^{-4}$"
+                 #       " (Nominal)",
+                 label="Re-gridded, nominal",
+                 linewidth=1)
+    plt.plot(nh3, p, color='yellow', linestyle='--', label="Original Grid, nominal; # of points = %d" % len(nh3))
+
+    plot_profile(grid_nominal, color='red', linestyle='-',
+                 # label="NH$_{3} -\ P\sim 0.1: 2.8\\times 10^{-8} \ -\ 55\% RH \ -\ P\sim 8: 2.40\\times 10^{-4}$"
+                 #       " (This work)",
+                 label="Re-gridded, this work",
+                 linewidth=2)
+
+    p_calc, nh3_calc = mdl.physical_tcm_model_prototype(.22, .56, .42)
+
+    plt.plot(nh3_calc, p_calc, color='purple', linestyle="--", label="Original Grid, this work; # of points = %d" % len(nh3_calc))
+
+
+    # plot_profile("nh3_abundance_t15rh50d39.dat", color='black', linestyle='--',
+    #              label="NH$_{3} -\ P\sim 0.1: 1.9\\times 10^{-8} \ -\ 50\% RH \ -\ P\sim 8: 2.26\\times 10^{-4}$"
+    #                    " (Low limits)",
+    #              linewidth=0.5)
+    # plot_profile("nh3_abundance_t200rh64d45.dat", color='black', linestyle=':',
+    #              label="NH$_{3} -\ P\sim 0.1: 2.4\\times 10^{-7} \ -\ 64\% RH \ -\ P\sim 8: 2.57\\times 10^{-4}$"
+    #                    " (High limits)",
+    #              linewidth=0.5)
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlim([1.e-8, 1.e-2])
+    plt.ylim([1.e1, 1.e-1])
+    plt.xlabel("Fractional Abundance")
+    plt.ylabel("P (bar)")
+    plt.legend()
+    plt.show()
+    return None
+
+
+def run_independent_data_check():
+    file_names = ["fig1a_jupiter_fluxdensities_RAW.txt", "fig1b_jupiter_fluxdensities_NORMALIZED.txt"]
+    plt.figure()
+    colors = paint_with_colors_of_wind()
+    for i in range(2):
+        plt.subplot(121 + i)
+        data = np.genfromtxt(file_names[i])
+        print data.shape
+        print data[0, 1::2]
+        for j in range(len(data[0, 1::2])):
+            plt.errorbar(data[:, 0], data[:, j * 2 + 1], yerr=data[:, j * 2 + 2], fmt='.', color=colors.next())
+        plt.title(file_names[i])
+        plt.xlabel("Date (MJD)")
+        plt.ylabel("Flux density (jy)")
+    plt.show()
+
+
+def run_write_out_raw_and_norm():
+    u = up.Unpack().prepare()
+    u.write_raw("fig1a_jupiter_fluxdensities_RAW.txt")
+    u.distance_adj()
+    u.write_raw("fig1b_jupiter_fluxdensities_NORMALIZED.txt")
+
+
 def run_normal():
     u = up.Unpack().prepare().adjust()
     wl = True
@@ -1053,4 +1154,4 @@ def run_atmosphere_graphs():
     plt.show()
 
 
-run_large_emission_plot_wl()
+run_write_out_brightness_model()

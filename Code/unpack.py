@@ -165,6 +165,23 @@ class Unpack:
         # self.error_investigation = st.Stats(self.channel_obj_list)
         return self
 
+    def write_raw(self, file_name):
+        fl = open(file_name, 'w')
+        fl.write("# Fluxes given in Jy, freq in GHz, date in MJD\n# Freq")
+        for channel in self.channel_obj_list:
+            msg = " %6.3f" % channel.frequency_ghz
+            fl.write(msg)
+        fl.write("\n# Date")
+        for channel in self.channel_obj_list:
+            fl.write(" Meas Err")
+        for i, date in enumerate(self.dates_copss_array):
+            msg = "\n%12.6f" % date
+            fl.write(msg)
+            for channel in self.channel_obj_list:
+                msg = " %10.6f %8.6f" % (channel.flux[i], channel.error[i])
+                fl.write(msg)
+        fl.close()
+
     def write_points(self):
         fl = open('ramsey_data_07_29_17.txt', 'w')
         fl.write("# Frequency (GHz), Wavelength (cm), T_b (K), Absolute Uncertainty (K), Relative Uncertainty (K)\n")

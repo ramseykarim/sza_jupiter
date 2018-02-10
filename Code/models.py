@@ -1,6 +1,6 @@
 import numpy as np
 from unpack import generate_names
-from numbers import Number
+from decimal import Decimal
 import re
 
 PATH = "/home/ramsey/Documents/Research/Jupiter/SZA/models/"
@@ -13,19 +13,6 @@ WMAP_TBE = np.array([0.85, 0.77, 0.67, 0.59, 0.54]) * WMAP_TB / 100.
 GIBSON_F = 28.5
 GIBSON_TB = 142.9
 GIBSON_TBE = 2.3
-
-
-def physical_model(p, original_nh3, top, humidity, deep):
-    """
-    Assumes p, nh3 sorted by p
-    :param p:
-    :param original_nh3:
-    :param top:
-    :param humidity:
-    :param deep:
-    :return:
-    """
-    return
 
 
 def examine_model(model_name):
@@ -138,6 +125,75 @@ def physical_tcm_model_prototype(top, rh, deep):
                 raise IndexError("Your ammonia ice cloud has dropped below another cloud.")
             within_cloud = False
     nh3[upper_i_sorted[i:]] = top_abundance
+    return p, nh3
+
+
+def physical_tcm_model_writeout(top, rh, deep):
+    """
+    Literally exactly the same as above but writes files out instead of returning arrays
+    The files are in the exact same format as jupiter.xxxxx files
+    They include all other constituents and are gridded to 2021 pressure levels
+    :param top: Multiplier for the uppermost, constant dry section.
+        Applied at P < SaturationCurve.
+    :param rh: Multiplier for relative humidity. This is applied by
+        shifting the saturation curve up or down, changing the
+        cloud base location.
+    :param deep: Multiplier for the deep abundance. Applied between
+        8 bar > P > SaturationCurve.
+    :return:
+    """
+    base_model = np.genfromtxt('/home/ramsey/Documents/Research/pyplanet/Jupiter/jupiter.paulvla72',
+                               skip_header=1)
+    p = base_model[:, 2]
+    nh3 = base_model[:, 6]
+    cloud_top, cloud_bottom, curve_fit = find_saturation_curve(p, nh3)
+    galileo_lim = 8
+    nh4sh_lim = 1.7
+    nh3[np.where((galileo_lim > p) & (p >= nh4sh_lim))] *= deep
+    upper = np.where(p < nh4sh_lim)
+    p_upper = p[upper]
+    upper_i_sorted = upper[0][np.argsort(np.reciprocal(p_upper))]
+    i = 0
+    top_abundance = float(nh3[np.where(p == np.min(p))]) * top
+    nh3[upper_i_sorted[i]] *= deep
+    deep_abundance = nh3[upper_i_sorted[i]]
+    p_sat_0 = p[cloud_bottom]
+    # Used to use p[upper_i_sorted[i]]/rh > p_sat_0
+    while p[upper_i_sorted[i]] > p_sat_0 and nh3[upper_i_sorted[i + 1]] >= nh3[upper_i_sorted[i]]:
+        nh3[upper_i_sorted[i + 1]] = deep_abundance
+        i += 1
+    within_cloud = True
+    new_cloud_bottom = i
+    while within_cloud:
+        # Used to use p[upper_i_sorted[i]]/rh
+        updated_nh3 = np.exp(polynomial_single(curve_fit, p[upper_i_sorted[i]])) * rh
+        if updated_nh3 > top_abundance:
+            if updated_nh3 > deep_abundance:
+                nh3[upper_i_sorted[i]] = deep_abundance
+            else:
+                nh3[upper_i_sorted[i]] = updated_nh3
+            i += 1
+        else:
+            if i == new_cloud_bottom:
+                print "<<================================>>"
+                print "Something went wrong. Diagnostics:"
+                print "TOP", top
+                print "RH", rh
+                print "DEEP", deep
+                print "i", i
+                print "current pressure", p[upper_i_sorted[i]]
+                print "top abundance", top_abundance
+                print "deep abundance", deep_abundance
+                print "prev abundance", nh3[upper_i_sorted[i - 1]]
+                print "attempted abundance", updated_nh3
+                print "<<================================>>"
+                raise IndexError("Your ammonia ice cloud has dropped below another cloud.")
+            within_cloud = False
+    nh3[upper_i_sorted[i:]] = top_abundance
+    # np.savetxt("../TXTs/jupiter.paulvla72_ramseycarma_XX", base_model,
+    #            fmt=["%8.1f", "%8.2f", "%11.4E", "%.3f", "%.3f", "%.2E", "%.2E", "%.2E", "%.2E", "%.2E", "%.2E"],
+    #            delimiter="  ", header="  %d" % base_model.shape[0], comments=""
+    #            )
     return p, nh3
 
 
